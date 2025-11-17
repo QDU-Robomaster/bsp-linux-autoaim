@@ -1,5 +1,7 @@
 sources:
 - url: https://xrobot-org.github.io/xrobot-modules/index.yaml
   priority: 0
+  namespace: xrobot-org
 - url: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
   priority: 0
+  namespace: qdu-robomaster

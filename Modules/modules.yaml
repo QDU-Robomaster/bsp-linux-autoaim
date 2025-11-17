@@ -1,9 +1,6 @@
 modules:
-- xrobot-org/BlinkLED
 - qdu-future/CameraBase
 - qdu-future/HikCamera
-- qdu-future/UvcCamera
 - qdu-future/ArmorDetector
 - qdu-future/ArmorTracker
-- qdu-future/RMSerialDriver
 - qdu-future/HikCamera
