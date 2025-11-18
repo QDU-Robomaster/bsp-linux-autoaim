@@ -75,7 +75,7 @@ int main(int, char **)
 
   LibXR::Thread term_thread;
   term_thread.Create(&terminal, LibXR::Terminal<1024, 64, 16, 128>::ThreadFun, "terminal",
-                     512, LibXR::Thread::Priority::MEDIUM);
+                     65536, LibXR::Thread::Priority::MEDIUM);
 
   auto log_topic = LibXR::Topic(LibXR::Topic::Find("/xr/log"));
   auto log_cb = LibXR::Topic::Callback::Create(log_cb_fun, log_topic);
