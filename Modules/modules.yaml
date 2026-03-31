@@ -1,8 +1,8 @@
 modules:
 - qdu-future/CameraBase
 - qdu-future/HikCamera
-- qdu-future/ArmorDetector@feat/sp_vision
-- qdu-future/ArmorTracker@feat/sp_vision
+- qdu-future/ArmorDetector
+- qdu-future/ArmorTracker
 - qdu-future/Aimer
 - qdu-future/DemoReplay
 - qdu-future/ReplayMetrics
