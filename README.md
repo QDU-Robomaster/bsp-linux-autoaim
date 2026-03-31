@@ -1,109 +1,110 @@
 # BSP Linux AutoAim
 
-基于 `libxr` / XRobot 的 Linux 自瞄仓库。
+基于 `libxr` / `xrobot` 的 Linux 实物自瞄主仓。
 
-## 当前能力
+当前主线已经统一到共享视觉核心：
 
-- `ArmorDetector`：YOLOv5 + OpenVINO 主检测链路，可选传统灯条几何细化
-- `ArmorTracker`：装甲板观测关联、EKF 状态估计、云台姿态 SLERP 插值、固定安装角 `yaw` 优化
-- `Aimer`：装甲板选择、弹道迭代、开火容差判断
-- `DemoReplay`：用 `Video/demo.avi` 和 `Video/demo.txt` 离线回放整条链路
-- `ReplayMetrics`：输出 detector / tracker / aimer 的量化结果
+- `ArmorDetector`
+- `ArmorTracker`
+- `Aimer`
 
-2026 年 3 月 31 日在仓库自带 demo 上的最近一次本地回放结果：
+Linux 主仓只负责把这套共享核心接到实物输入链：
 
-- `lock_rate=0.852`
-- `avg_pred_center_px=25.91`
-- `avg_pred_corner_px=36.42`
-- `tracker_resets=4`
+- `HikCamera`
+- `DemoReplay`
+- `ReplayMetrics`
 
-这些数字是当前代码在本机 replay 的参考值，不是固定指标。
+## Role
 
-## 目录结构
+- `rm_auto_aim`
+  - 实机入口
+- `rm_auto_aim_demo`
+  - 离线回放入口
+
+## Layout
 
 ```text
-Modules/        功能模块：ArmorDetector、ArmorTracker、Aimer、HikCamera、DemoReplay
-User/           应用入口、XRobot 组装配置、生成的 xrobot_main*.hpp
-Video/          本地回放素材（demo.avi、demo.txt）
-libxr/          框架与底层组件
-build/          CMake 构建输出
-AGENTS.md       仓库协作/贡献约定
+Modules/   模块依赖清单
+User/      xrobot 装配配置与生成入口
+Video/     离线回放素材
+libxr/     框架与底层组件
 ```
 
-## 依赖
+## Assembly
 
-- CMake >= 3.10
-- 支持 C++17 的编译器
-- OpenCV 4
-- OpenVINO Runtime
-- Hikrobot MVS SDK
-  只在使用 `HikCamera` 实机运行时需要
-- `xrobot` 工具链
-  修改 `User/xrobot.yaml` 或 `User/xrobot_demo.yaml` 后需要重新生成入口
+- `Modules/modules.yaml`
+  - 决定需要拉取哪些模块仓库
+- `User/xrobot.yaml`
+  - 实机装配配置
+- `User/xrobot_demo.yaml`
+  - 离线回放装配配置
+- `User/xrobot_main.hpp`
+  - 由 `xrobot_gen_main` 生成，不手改
+- `User/xrobot_main_demo.hpp`
+  - 由 `xrobot_gen_main` 生成，不手改
 
-## 编译
+## Core Topic Contract
 
-首次拉取建议先初始化子模块：
+共享视觉主线的数据流是：
+
+1. 相机侧发布
+   - `image_raw`
+   - `camera_info`
+2. `ArmorDetector` 输出
+   - `armor_detector/armors_result`
+   - `armor_detector/metrics`
+3. `ArmorTracker` 输出
+   - `tracker/info`
+   - `tracker/metrics`
+   - `tracker/target`
+4. `Aimer` 输出
+   - `tracker/target_eulr`
+   - `tracker/send`
+   - `aimer/metrics`
+
+Linux 主仓在这条共享主线之外还会接入：
+
+- 实机输入
+  - `HikCamera`
+- 离线输入
+  - `DemoReplay`
+- 离线评估
+  - `ReplayMetrics`
+
+## Build
 
 ```bash
 git submodule update --init --recursive
-cmake -S . -B build
+xrobot_init_mod
+xrobot_gen_main --output User/xrobot_main.hpp
+xrobot_gen_main --config User/xrobot_demo.yaml --output User/xrobot_main_demo.hpp
+cmake -S . -B build -G Ninja -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime/cmake
 cmake --build build -j$(nproc)
 ```
 
-可执行文件：
+## Run
 
-- `./build/rm_auto_aim`：实机模式
-- `./build/rm_auto_aim_demo`：离线 demo 回放
-
-如果改了 XRobot YAML 组装文件，先重新生成入口：
-
-```bash
-xrobot_gen_main
-```
-
-不要手改 `User/xrobot_main.hpp` 或 `User/xrobot_main_demo.hpp`。
-
-## 运行
-
-### 1. 离线回放
-
-```bash
-./build/rm_auto_aim_demo
-```
-
-默认读取 [User/xrobot_demo.yaml](/home/leo/Documents/bsp-linux-autoaim/User/xrobot_demo.yaml) 中配置的：
-
-- `Video/demo.avi`
-- `Video/demo.txt`
-
-适合做算法验证、调参数和看调试界面。
-
-### 2. 实机运行
+实机：
 
 ```bash
 ./build/rm_auto_aim
 ```
 
-默认读取 [User/xrobot.yaml](/home/leo/Documents/bsp-linux-autoaim/User/xrobot.yaml)，使用 `HikCamera` 采图。需要相机、MVS SDK 和对应外参配置正确。
+离线回放：
 
-## 调试与配置
+```bash
+./build/rm_auto_aim_demo
+```
 
-- 检测调试窗口：将 `armor_detector.debug.preview` 设为 `true`
-- 跟踪调试窗口：将 `armor_tracker.debug.preview` 设为 `true`
-- 回放模式下建议优先打开 tracker 预览，它会显示候选装甲板、预测装甲板矩形、EKF 状态、`jumped`、NIS 和投影误差
-- `User/xrobot_demo.yaml` 用于离线验证
-- `User/xrobot.yaml` 用于实机运行
+## Preview
 
-关键配置项：
+预览统一只由 YAML 控制，不走 CMake 开关。
 
-- 相机内参、畸变、分辨率：`HikCamera.info` 或 `DemoReplay.info`
-- 相机到云台外参：`armor_tracker.cfg.frames`
-- 检测参数：`armor_detector.cfg.yolo` / `traditional`
-- 瞄准参数：`aimer.cfg`
+- `armor_detector.cfg.debug.preview`
+- `armor_tracker.cfg.debug.preview`
 
-## 说明
+## Notes
 
-- 根目录的 `tracker.sh` 是历史脚本，不是当前 CMake 程序入口
-- 模块级说明可分别查看 `Modules/*/README.md`
-- 贡献/协作约定见 [AGENTS.md](/home/leo/Documents/bsp-linux-autoaim/AGENTS.md)
+- `DemoReplay` 和 `ReplayMetrics` 主要服务于离线验证链路
+- `tracker.sh` 属于历史脚本，不是当前主程序入口
+- 当前共享视觉核心已经回到各模块仓库的 `master`
