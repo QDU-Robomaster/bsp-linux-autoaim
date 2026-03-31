@@ -3,4 +3,6 @@ modules:
 - qdu-future/HikCamera
 - qdu-future/ArmorDetector
 - qdu-future/ArmorTracker
-- qdu-future/HikCamera
+- qdu-future/Aimer
+- qdu-future/DemoReplay
+- qdu-future/ReplayMetrics
