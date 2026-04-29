@@ -18,7 +18,14 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       appmgr,
       HikCamera<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.camera_name = "camera", .image_topic_name = "camera_image", .imu_topic_name = "camera_imu", .gain = 32.0F, .exposure_time = 600.0F, .external_trigger = true, .acquisition_frame_rate = 249.0F, .grab_timeout_ms = 100, .image_node_num = 3}
   );
-  static CameraFrameSync<AutoAimRunConfig::MainCameraInfo> camera_frame_sync(hw, appmgr, camera);
+  static CameraFrameSync<
+      AutoAimRunConfig::MainCameraInfo
+  > camera_frame_sync(
+      hw,
+      appmgr,
+      camera,
+      CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, .offset_us = 0}
+  );
   static ArmorDetector<AutoAimRunConfig::MainCameraInfo> armor_detector(
       hw,
       appmgr,

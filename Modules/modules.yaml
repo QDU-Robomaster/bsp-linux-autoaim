@@ -1,6 +1,7 @@
 modules:
 - qdu-future/CameraBase
 - qdu-future/HikCamera
-- qdu-future/CameraFrameSync
+- qdu-future/CaptureFileCamera
+- qdu-future/CameraFrameSync@codex/sync-mode-yaml-20260429
 - qdu-future/ArmorDetector
 - qdu-future/ArmorTracker

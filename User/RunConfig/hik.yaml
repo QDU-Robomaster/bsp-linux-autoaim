@@ -27,6 +27,8 @@ modules:
       Info: {constexpr: MainCameraInfo}
     constructor_args:
       camera: '@camera'
+      runtime:
+        expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, .offset_us = 0}"
 
   - id: armor_detector
     name: ArmorDetector

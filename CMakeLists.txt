@@ -19,15 +19,8 @@ add_subdirectory(libxr)
 
 add_executable(${PROJECT_NAME} User/main.cpp)
 
-add_executable(${PROJECT_NAME}_demo EXCLUDE_FROM_ALL User/demo_main.cpp)
-
 target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC xr
-)
-
-target_link_libraries(
-    ${PROJECT_NAME}_demo
     PUBLIC xr
 )
 
@@ -37,16 +30,6 @@ target_include_directories(
 )
 
 target_include_directories(
-    ${PROJECT_NAME}_demo
-    PUBLIC $<TARGET_PROPERTY:xr,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-target_include_directories(
     ${PROJECT_NAME}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/User
-)
-
-target_include_directories(
-    ${PROJECT_NAME}_demo
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/User
 )

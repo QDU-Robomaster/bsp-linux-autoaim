@@ -19,7 +19,7 @@ modules:
       Info: {constexpr: MainCameraInfo}
     constructor_args:
       runtime:
-        expr: "CaptureFileCamera<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.file_path = \"/home/xiao/data/camera_internal_recording_20260428/damo.avi\", .camera_name = \"camera\", .image_topic_name = \"camera_image\", .imu_topic_name = \"camera_imu\", .realtime = true, .loop = false, .clear_embedded_header = true, .max_frames = 0}"
+        expr: "CaptureFileCamera<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.file_path = \"/home/xiao/data/camera_internal_recording_20260428/damo.avi\", .camera_name = \"capturefile_camera\", .image_topic_name = \"capturefile_image\", .imu_topic_name = \"capturefile_imu\", .realtime = true, .loop = false, .clear_embedded_header = true, .max_frames = 0}"
 
   - id: camera_frame_sync
     name: CameraFrameSync
@@ -27,14 +27,8 @@ modules:
       Info: {constexpr: MainCameraInfo}
     constructor_args:
       camera: '@camera'
-
-  - id: camera_frame_sync_mode
-    name: CameraFrameSyncMode
-    template_args:
-      Info: {constexpr: MainCameraInfo}
-    constructor_args:
-      sync: '@camera_frame_sync'
-      mode: CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU
+      runtime:
+        expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU, .offset_us = 0}"
 
   - id: armor_detector
     name: ArmorDetector

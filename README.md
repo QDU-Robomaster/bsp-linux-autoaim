@@ -2,109 +2,61 @@
 
 基于 `libxr` / `xrobot` 的 Linux 实物自瞄主仓。
 
-当前主线已经统一到共享视觉核心：
+当前主线只维护这一条核心链路：
 
-- `ArmorDetector`
-- `ArmorTracker`
-- `Aimer`
-
-Linux 主仓只负责把这套共享核心接到实物输入链：
-
-- `HikCamera`
-- `DemoReplay`
-- `ReplayMetrics`
-
-## Role
-
-- `rm_auto_aim`
-  - 实机入口
-- `rm_auto_aim_demo`
-  - 离线回放入口
+```text
+Camera -> CameraFrameSync -> ArmorDetector -> ArmorTracker
+```
 
 ## Layout
 
 ```text
-Modules/   模块依赖清单
-User/      xrobot 装配配置与生成入口
-Video/     离线回放素材
-libxr/     框架与底层组件
+Modules/                 模块依赖清单
+User/main.cpp            程序入口，初始化 LibXR 后调用 XRobotMain
+User/xrobot_main.hpp     当前默认生成结果，默认使用 hik preset
+User/xrobot_constexpr.hpp 当前默认生成常量
+User/RunConfig/          可选择的 xrobot 装配 preset
+libxr/                   框架 submodule
 ```
 
-## Assembly
+## Presets
 
-- `Modules/modules.yaml`
-  - 决定需要拉取哪些模块仓库
-- `User/xrobot.yaml`
-  - 实机装配配置
-- `User/xrobot_demo.yaml`
-  - 离线回放装配配置
-- `User/xrobot_main.hpp`
-  - 由 `xrobot_gen_main` 生成，不手改
-- `User/xrobot_main_demo.hpp`
-  - 由 `xrobot_gen_main` 生成，不手改
+- `User/RunConfig/hik.yaml`
+  - 实机 Hik 相机入口
+  - `CameraFrameSync` mode: `RAW_PROBE`
+  - 默认签入的 `xrobot_main.hpp` 就是从这个 preset 生成
+  - 需要真实 Hik 相机、硬件触发、以及板端发布 `camera_gyro/camera_accl/camera_quat`
 
-## Core Topic Contract
+- `User/RunConfig/capturefile.yaml`
+  - 使用内录文件验证视觉链路
+  - `CameraFrameSync` mode: `LATEST_IMU`
+  - 使用独立的 `capturefile_*` topic 名，避免和实机入口冲突
+  - 数据文件：`/home/xiao/data/camera_internal_recording_20260428/damo.avi`
+  - 用于无 Hik 相机时跑通 sync/detector/tracker
 
-共享视觉主线的数据流是：
+## Generate
 
-1. 相机侧发布
-   - `image_raw`
-   - `camera_info`
-2. `ArmorDetector` 输出
-   - `armor_detector/armors_result`
-   - `armor_detector/metrics`
-3. `ArmorTracker` 输出
-   - `tracker/info`
-   - `tracker/metrics`
-   - `tracker/target`
-4. `Aimer` 输出
-   - `tracker/target_eulr`
-   - `tracker/send`
-   - `aimer/metrics`
+```bash
+xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
+xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
+```
 
-Linux 主仓在这条共享主线之外还会接入：
-
-- 实机输入
-  - `HikCamera`
-- 离线输入
-  - `DemoReplay`
-- 离线评估
-  - `ReplayMetrics`
+`xrobot_main.hpp` 和 `xrobot_constexpr.hpp` 是生成文件。改 preset 后重新生成，再编译。
 
 ## Build
 
 ```bash
 git submodule update --init --recursive
-xrobot_init_mod
-xrobot_gen_main --output User/xrobot_main.hpp
-xrobot_gen_main --config User/xrobot_demo.yaml --output User/xrobot_main_demo.hpp
+xrobot_setup
+xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
 cmake -S . -B build -G Ninja -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime/cmake
-cmake --build build -j$(nproc)
+cmake --build build --target rm_auto_aim
 ```
 
-## Run
+CI 会分别生成并构建 `capturefile.yaml` 和 `hik.yaml`。
 
-实机：
+## Run
 
 ```bash
 ./build/rm_auto_aim
 ```
-
-离线回放：
-
-```bash
-./build/rm_auto_aim_demo
-```
-
-## Preview
-
-预览统一只由 YAML 控制，不走 CMake 开关。
-
-- `armor_detector.cfg.debug.preview`
-- `armor_tracker.cfg.debug.preview`
-
-## Notes
-
-- `DemoReplay` 和 `ReplayMetrics` 主要服务于离线验证链路
-- `tracker.sh` 属于历史脚本，不是当前主程序入口
-- 当前共享视觉核心已经回到各模块仓库的 `master`
