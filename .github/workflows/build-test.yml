@@ -30,10 +30,10 @@ jobs:
     - name: config cmake capturefile
       run: cmake . -Bbuild_capturefile -G Ninja
     - name: build capturefile
-      run: cmake --build build_capturefile
+      run: cmake --build build_capturefile --target rm_auto_aim
     - name: generate hik preset
       run: xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
     - name: config cmake hik
       run: cmake . -Bbuild_hik -G Ninja
     - name: build hik
-      run: cmake --build build_hik
+      run: cmake --build build_hik --target rm_auto_aim

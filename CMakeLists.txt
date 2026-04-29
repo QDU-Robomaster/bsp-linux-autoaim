@@ -19,7 +19,7 @@ add_subdirectory(libxr)
 
 add_executable(${PROJECT_NAME} User/main.cpp)
 
-add_executable(${PROJECT_NAME}_demo User/demo_main.cpp)
+add_executable(${PROJECT_NAME}_demo EXCLUDE_FROM_ALL User/demo_main.cpp)
 
 target_link_libraries(
     ${PROJECT_NAME}
