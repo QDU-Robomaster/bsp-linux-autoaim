@@ -39,7 +39,7 @@ void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::RawData &log_data) =
       oss << std::put_time(&tm, "%Y%m%d_%H%M%S") << ".log";
       f.open(oss.str(), std::ios::out | std::ios::app);
 
-      LibXR::STDIO::Printf("Log written to %s\n", oss.str().c_str());
+      LibXR::STDIO::Printf<"Log written to %s\n">(oss.str().c_str());
     }
 
     if (f)
