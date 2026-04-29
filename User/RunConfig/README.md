@@ -18,8 +18,8 @@ This directory follows the `bsp-dev-c` preset pattern: keep one generated
   - Purpose: real camera with external hardware trigger and real raw IMU topics
   - Runtime requirement: the platform must provide `camera_gyro`, `camera_accl`,
     `camera_quat`, and a hardware-side responder for `sensor_sync_cmd`
-  - Review branch requirement: use `HikCamera` branch
-    `codex/hik-camerabase-20260429` until the module update is merged
+  - Module requirement: current `HikCamera` master contains the CameraBase producer
+    and timestamp diagnostics used by this preset.
 
 ## Generate
 

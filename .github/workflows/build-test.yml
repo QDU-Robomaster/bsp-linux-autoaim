@@ -25,7 +25,15 @@ jobs:
         apt-get install -y --no-install-recommends libgpiod-dev
     - name: get modules && setup
       run: xrobot_setup
-    - name: config cmake
-      run: cmake . -Bbuild -G Ninja
-    - name: build
-      run: cmake --build build
+    - name: generate capturefile preset
+      run: xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
+    - name: config cmake capturefile
+      run: cmake . -Bbuild_capturefile -G Ninja
+    - name: build capturefile
+      run: cmake --build build_capturefile
+    - name: generate hik preset
+      run: xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
+    - name: config cmake hik
+      run: cmake . -Bbuild_hik -G Ninja
+    - name: build hik
+      run: cmake --build build_hik

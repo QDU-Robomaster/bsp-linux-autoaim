@@ -2,23 +2,35 @@
 #include "libxr.hpp"
 
 // Module headers
-#include "CameraBase.hpp"
-#include "DemoReplay.hpp"
-#include "ArmorDetector.hpp"
-#include "ReplayMetrics.hpp"
-#include "ArmorTracker.hpp"
-#include "Aimer.hpp"
 #include "HikCamera.hpp"
+#include "CameraFrameSync.hpp"
+#include "ArmorDetector.hpp"
+#include "ArmorTracker.hpp"
+#include "xrobot_constexpr.hpp"
 
 static void XRobotMain(LibXR::HardwareContainer &hw) {
   using namespace LibXR;
   ApplicationManager appmgr;
 
   // Auto-generated module instantiations
-  static HikCamera hik_camera(hw, appmgr, {1440, 1080, 4320, 0, CameraBase::Encoding::RGB8, {2340.46464112537, 0.0, 713.3224120377864, 0.0, 2336.8745144649124, 547.4106752074272, 0.0, 0.0, 1.0}, CameraBase::DistortionModel::PLUMB_BOB, {-0.09558691800515781, 0.3013704144837407, -0.0008218465102445683, 0.00024582434306615617, 0.0}, {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, {2323.906982421875, 0.0, 712.9446224841959, 0.0, 0.0, 2324.767578125, 546.6426169058832, 0.0, 0.0, 0.0, 1.0, 0.0}}, {32.0, 600.0, true});
-  static ArmorDetector armor_detector(hw, appmgr, {1, {150.0, 45.0, 1.5, 20.0, 8.0, 1.0, 5.0, 1.5, 25.0}, {false, 420, 50, 600, 600, true, 0.7, 0.3, 0.8}, {false, false, 1, 0.75}});
-  static ArmorTracker armor_tracker(hw, appmgr, {{10.0, 1.0}, {5, 15, 75}, {{0.4938528651012095, -0.5019457735940993, 0.49263726396521773, -0.5113397247967462}, {0.09496930183353451, 0.09500629029800668, 0.05098706629175661}}, {false, 1, 0.75, true}});
-  static Aimer aimer(hw, appmgr, {0.0, 0.0, 60.0, 20.0, 2.0, 0.03, 0.015, 23.0, 14.0, 3.0, 2.0, 2.0, true});
+  static HikCamera<AutoAimRunConfig::MainCameraInfo> camera(
+      hw,
+      appmgr,
+      HikCamera<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.camera_name = "camera", .image_topic_name = "camera_image", .imu_topic_name = "camera_imu", .gain = 32.0F, .exposure_time = 600.0F, .external_trigger = true, .acquisition_frame_rate = 249.0F, .grab_timeout_ms = 100, .image_node_num = 3}
+  );
+  static CameraFrameSync<AutoAimRunConfig::MainCameraInfo> camera_frame_sync(hw, appmgr, camera);
+  static ArmorDetector<AutoAimRunConfig::MainCameraInfo> armor_detector(
+      hw,
+      appmgr,
+      ArmorDetector<AutoAimRunConfig::MainCameraInfo>::Config{.detect_color = 2, .traditional = {}, .yolo = {.use_roi = false, .roi_x = 420, .roi_y = 50, .roi_width = 600, .roi_height = 600, .use_traditional_refine = true, .score_threshold = 0.55, .nms_threshold = 0.30, .min_confidence = 0.55}, .debug = {.preview = false, .show_binary = false, .wait_key_ms = 1, .overlay_scale = 0.75}},
+      camera_frame_sync
+  );
+  static ArmorTracker<AutoAimRunConfig::MainCameraInfo> armor_tracker(
+      hw,
+      appmgr,
+      ArmorTracker<AutoAimRunConfig::MainCameraInfo>::Config{.limits = {.max_armor_distance = 30.0, .max_z_position = 30.0}, .match = {.max_match_distance = 0.15, .max_match_yaw_diff = 1.0}, .thresholds = {.tracking_thres = 5, .lost_time_thres = 0.3}, .solver = {.k = 0.092, .bias_time = 100, .s_bias = 0.19133, .z_bias = 0.21265, .calculate_mode = SolveTrajectory::NORMAL, .table_config = TrajectoryTable::TableConfig(13.0, 0.0, 1.0, -1.0, 0.01, "table.bin")}, .ekf = {.sigma2_q_xyz = 20.0, .sigma2_q_yaw = 100.0, .sigma2_q_r = 800.0}, .geometry = {.initial_radius = 0.26, .min_radius = 0.12, .max_radius = 0.4}, .noise = {.r_xyz_factor = 0.05, .r_yaw = 0.02}, .frames = {.rotation = {0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, .translation = {0.136068364765315, -0.041861764663827829, 0.0089956658836358675}}},
+      camera_frame_sync
+  );
 
   while (true) {
     appmgr.MonitorAll();
