@@ -31,7 +31,9 @@ libxr/                   框架 submodule
   - 使用内录文件验证视觉链路
   - `CameraFrameSync` mode: `LATEST_IMU`
   - 使用独立的 `capturefile_*` topic 名，避免和实机入口冲突
-  - 数据文件：`/home/xiao/data/camera_internal_recording_20260428/damo.avi`
+  - 数据文件：
+    - `/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi`
+    - `/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv`
   - 用于无 Hik 相机时跑通 sync/detector/tracker
 
 ## Generate

@@ -5,6 +5,3 @@ sources:
 - url: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
   priority: 0
   namespace: qdu-robomaster
-- url: https://raw.githubusercontent.com/QDU-Robomaster/qdu-future-modules/codex/add-capturefilecamera-20260429/index.yaml
-  priority: 1
-  namespace: qdu-robomaster-review

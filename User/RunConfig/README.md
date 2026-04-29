@@ -11,7 +11,9 @@ This directory follows the `bsp-dev-c` preset pattern: keep one generated
   - Sync: set by YAML to `CameraFrameSync::LATEST_IMU`
   - Topics: `capturefile_image`, `capturefile_imu`, and raw IMU under
     `capturefile_camera_*`
-  - Purpose: offline validation with `/home/xiao/data/camera_internal_recording_20260428/damo.avi`
+  - Purpose: offline validation with a cleaned capture package:
+    `/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi` and
+    `/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv`
   - This preset intentionally contains only the production camera/sync/detector/tracker graph.
 
 - `hik.yaml`
