@@ -6,6 +6,7 @@
 
 ```text
 Camera -> CameraFrameSync -> ArmorDetector -> ArmorTracker
+                                      \-> VisionPreview（可选）
 ```
 
 ## Layout
@@ -26,6 +27,7 @@ libxr/                   框架 submodule
   - `CameraFrameSync` mode: `RAW_PROBE`
   - 默认签入的 `xrobot_main.hpp` 就是从这个 preset 生成
   - 需要真实 Hik 相机、硬件触发、以及板端发布 `camera_gyro/camera_accl/camera_quat`
+  - `VisionPreview` 默认关闭，需要实时预览或录像时只改它的配置
 
 - `User/RunConfig/capturefile.yaml`
   - 使用内录文件验证视觉链路
@@ -35,6 +37,19 @@ libxr/                   框架 submodule
     - `/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi`
     - `/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv`
   - 用于无 Hik 相机时跑通 sync/detector/tracker
+  - `VisionPreview` 默认关闭，需要离线落盘或预览时只改它的配置
+
+## 预览与落盘
+
+预览逻辑集中在 `VisionPreview` 模块中，`ArmorDetector` 和 `ArmorTracker`
+不直接创建窗口、写视频或绘制 overlay。
+
+`VisionPreview` 的主要开关：
+
+- `enabled`：总开关。
+- `record_raw`：写原始视频和 detector/tracker topic 数据。
+- `realtime_preview`：打开实时窗口。
+- `overlay.detector`、`overlay.tracker`、`overlay.candidate_debug`：分层控制绘制内容。
 
 ## Generate
 
