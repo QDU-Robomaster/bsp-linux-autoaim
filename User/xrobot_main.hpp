@@ -42,7 +42,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static VisionPreview<AutoAimRunConfig::MainCameraInfo> vision_preview(
       hw,
       appmgr,
-      VisionPreview<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.enabled = false, .record_raw = false, .realtime_preview = false, .overlay = {.detector = true, .tracker = true, .candidate_debug = false}, .output_dir = "/tmp/autoaim_preview", .raw_video_name = "raw.avi", .preview_window_name = "autoaim_preview", .preview_scale = 0.5, .preview_wait_key_ms = 1, .record_fps = 100.0},
+      VisionPreview<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.enabled = true, .record_raw = true, .realtime_preview = false, .overlay = {.detector = true, .tracker = true, .candidate_debug = true}, .output_dir = "/tmp/autoaim_preview_hik", .raw_video_name = "raw.avi", .preview_window_name = "autoaim_preview", .preview_scale = 0.5, .preview_wait_key_ms = 1, .record_fps = 100.0},
       camera_frame_sync
   );
 

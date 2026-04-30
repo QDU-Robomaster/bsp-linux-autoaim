@@ -27,7 +27,7 @@ libxr/                   框架 submodule
   - `CameraFrameSync` mode: `RAW_PROBE`
   - 默认签入的 `xrobot_main.hpp` 就是从这个 preset 生成
   - 需要真实 Hik 相机、硬件触发、以及板端发布 `camera_gyro/camera_accl/camera_quat`
-  - `VisionPreview` 默认关闭，需要实时预览或录像时只改它的配置
+  - `VisionPreview` 默认写原始视频、overlay 视频和 topic TSV 到 `/tmp/autoaim_preview_hik`
 
 - `User/RunConfig/capturefile.yaml`
   - 使用内录文件验证视觉链路
@@ -37,7 +37,7 @@ libxr/                   框架 submodule
     - `/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi`
     - `/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv`
   - 用于无 Hik 相机时跑通 sync/detector/tracker
-  - `VisionPreview` 默认关闭，需要离线落盘或预览时只改它的配置
+  - `VisionPreview` 默认写原始视频、overlay 视频和 topic TSV 到 `/tmp/autoaim_preview_capturefile`
 
 ## 预览与落盘
 
@@ -46,10 +46,16 @@ libxr/                   框架 submodule
 
 `VisionPreview` 的主要开关：
 
-- `enabled`：总开关。
-- `record_raw`：写原始视频和 detector/tracker topic 数据。
-- `realtime_preview`：打开实时窗口。
+- `enabled`：总开关，当前两个 preset 默认开启。
+- `record_raw`：写原始视频、overlay 视频和 detector/tracker topic 数据，当前两个 preset 默认开启。
+- `realtime_preview`：打开实时窗口，当前默认关闭。
 - `overlay.detector`、`overlay.tracker`、`overlay.candidate_debug`：分层控制绘制内容。
+
+落盘文件包括 `raw.avi`、`overlay.avi`、`detector.tsv`、`metrics.tsv`、
+`target.tsv`、`ekf_points.tsv`、`candidate_debug.tsv` 和
+`candidate_items.tsv`。`overlay.tracker` 默认只画 tracker 中心和当前匹配观测
+对应的 EKF 面；EKF 模型补全的其它装甲板点需要在 VisionPreview 中显式打开
+`overlay.model_faces`。
 
 ## Generate
 
