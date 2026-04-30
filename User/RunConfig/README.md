@@ -41,6 +41,10 @@
 `candidate_items.tsv`。EKF 模型补全的其它装甲板点不默认显示，需要在
 VisionPreview 中显式打开 `overlay.model_faces`。
 
+两个 preset 的 `ArmorTracker` 都显式使用 `match.max_match_yaw_diff=0.50`、
+`sp.measurement_recenter_alpha=0.20` 和 `sp.quality_recenter=true`。这样单块装甲
+观测只校正状态，不把整车状态硬拉到当前可见装甲板上。
+
 ## Generate
 
 ```bash

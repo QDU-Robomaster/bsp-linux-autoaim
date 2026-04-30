@@ -57,6 +57,10 @@ libxr/                   框架 submodule
 对应的 EKF 面；EKF 模型补全的其它装甲板点需要在 VisionPreview 中显式打开
 `overlay.model_faces`。
 
+当前两个 preset 都显式设置 `ArmorTracker` 的 yaw 匹配门限为 `0.50rad`、
+SP 单装甲重定位权重为 `0.20`，并打开质量门控，避免单帧可见装甲板把
+整车状态强行拉偏。
+
 ## Generate
 
 ```bash
