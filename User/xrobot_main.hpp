@@ -36,13 +36,13 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorTracker<AutoAimRunConfig::MainCameraInfo> armor_tracker(
       hw,
       appmgr,
-      ArmorTracker<AutoAimRunConfig::MainCameraInfo>::Config{.limits = {.max_armor_distance = 30.0, .max_z_position = 30.0}, .match = {.max_match_distance = 0.15, .max_match_yaw_diff = 1.0}, .thresholds = {.tracking_thres = 5, .lost_time_thres = 0.3}, .solver = {.k = 0.092, .bias_time = 100, .s_bias = 0.19133, .z_bias = 0.21265, .calculate_mode = SolveTrajectory::NORMAL, .table_config = TrajectoryTable::TableConfig(13.0, 0.0, 1.0, -1.0, 0.01, "table.bin")}, .ekf = {.sigma2_q_xyz = 20.0, .sigma2_q_yaw = 100.0, .sigma2_q_r = 800.0}, .geometry = {.initial_radius = 0.26, .min_radius = 0.12, .max_radius = 0.4}, .noise = {.r_xyz_factor = 0.05, .r_yaw = 0.02}, .frames = {.rotation = {0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, .translation = {0.136068364765315, -0.041861764663827829, 0.0089956658836358675}}},
+      ArmorTracker<AutoAimRunConfig::MainCameraInfo>::Config{.limits = {.max_armor_distance = 30.0, .max_z_position = 30.0}, .match = {.max_match_distance = 0.15, .max_match_yaw_diff = 0.50}, .thresholds = {.tracking_thres = 5, .lost_time_thres = 0.3}, .solver = {.k = 0.092, .bias_time = 100, .s_bias = 0.19133, .z_bias = 0.21265, .calculate_mode = SolveTrajectory::NORMAL, .table_config = TrajectoryTable::TableConfig(13.0, 0.0, 1.0, -1.0, 0.01, "table.bin")}, .ekf = {.sigma2_q_xyz = 20.0, .sigma2_q_yaw = 100.0, .sigma2_q_r = 800.0}, .geometry = {.initial_radius = 0.26, .min_radius = 0.12, .max_radius = 0.4}, .noise = {.r_xyz_factor = 0.05, .r_yaw = 0.02}, .frames = {.rotation = {0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, .translation = {0.136068364765315, -0.041861764663827829, 0.0089956658836358675}}, .sp = {.enable_pair_dz = false, .measurement_recenter_alpha = 0.20, .quality_recenter = true}},
       camera_frame_sync
   );
   static VisionPreview<AutoAimRunConfig::MainCameraInfo> vision_preview(
       hw,
       appmgr,
-      VisionPreview<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.enabled = false, .record_raw = false, .realtime_preview = false, .overlay = {.detector = true, .tracker = true, .candidate_debug = false}, .output_dir = "/tmp/autoaim_preview", .raw_video_name = "raw.avi", .preview_window_name = "autoaim_preview", .preview_scale = 0.5, .preview_wait_key_ms = 1, .record_fps = 100.0},
+      VisionPreview<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.enabled = true, .record_raw = true, .realtime_preview = false, .overlay = {.detector = true, .tracker = true, .candidate_debug = true}, .output_dir = "/tmp/autoaim_preview_hik", .raw_video_name = "raw.avi", .preview_window_name = "autoaim_preview", .preview_scale = 0.5, .preview_wait_key_ms = 1, .record_fps = 100.0},
       camera_frame_sync
   );
 
