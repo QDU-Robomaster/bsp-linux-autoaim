@@ -19,7 +19,7 @@
   - 输入源：`HikCamera`
   - 同步模式：`CameraFrameSync::RAW_PROBE`
   - 用途：实机 Hik 相机、外部硬件触发和真实原始 IMU topic。
-  - 运行要求：平台必须提供 `camera_gyro`、`camera_accl`、`camera_quat`，
+  - 运行要求：平台必须提供 `gimbal_gyro`、`gimbal_accl`、`gimbal_quat`，
     并在硬件侧响应 `sensor_sync_cmd`。
 
 ## 预览配置

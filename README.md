@@ -26,7 +26,7 @@ libxr/                   框架 submodule
   - 实机 Hik 相机入口
   - `CameraFrameSync` mode: `RAW_PROBE`
   - 默认签入的 `xrobot_main.hpp` 就是从这个 preset 生成
-  - 需要真实 Hik 相机、硬件触发、以及板端发布 `camera_gyro/camera_accl/camera_quat`
+  - 需要真实 Hik 相机、硬件触发、以及板端发布 `gimbal_gyro/gimbal_accl/gimbal_quat`
   - `VisionPreview` 默认关闭，需要实时预览或录像时只改它的配置
 
 - `User/RunConfig/capturefile.yaml`
