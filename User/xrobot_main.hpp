@@ -30,7 +30,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorDetector<AutoAimRunConfig::MainCameraInfo> armor_detector(
       hw,
       appmgr,
-      ArmorDetector<AutoAimRunConfig::MainCameraInfo>::Config{.detect_color = 2, .traditional = {}, .yolo = {.use_roi = false, .roi_x = 420, .roi_y = 50, .roi_width = 600, .roi_height = 600, .use_traditional_refine = true, .score_threshold = 0.55, .nms_threshold = 0.30, .min_confidence = 0.55}},
+      ArmorDetector<AutoAimRunConfig::MainCameraInfo>::Config{.detect_color = 2, .network = {.score_threshold = 0.1, .min_confidence = 0.1, .enable_quad_check = true, .min_quad_area_px = 16.0}},
       camera_frame_sync
   );
   static ArmorTracker<AutoAimRunConfig::MainCameraInfo> armor_tracker(
