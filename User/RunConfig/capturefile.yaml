@@ -28,7 +28,7 @@ modules:
     constructor_args:
       camera: '@camera'
       runtime:
-        expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU, .offset_us = 0}"
+        expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU, .offset_us = 0, .host_topic_domain_name = \"libxr_def_domain\"}"
 
   - id: armor_detector
     name: ArmorDetector
