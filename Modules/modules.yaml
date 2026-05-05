@@ -1,6 +1,6 @@
 modules:
 - qdu-future/CameraBase
-- qdu-future/HikCamera@codex/hik-exposure-gain-20260505
+- qdu-future/HikCamera
 - qdu-future/CaptureFileCamera
 - qdu-future/CameraSync
 - qdu-future/CameraFrameSync
