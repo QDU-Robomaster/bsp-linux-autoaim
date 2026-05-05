@@ -2,8 +2,8 @@ modules:
 - qdu-future/CameraBase
 - qdu-future/HikCamera
 - qdu-future/CaptureFileCamera
-- qdu-future/CameraSync@codex/camera-sync-run-div-20260505
-- qdu-future/CameraFrameSync@codex/camera-sync-run-div-20260505
+- qdu-future/CameraSync
+- qdu-future/CameraFrameSync
 - xrobot-org/SharedTopic
 - xrobot-org/SharedTopicClient
 - qdu-future/ArmorDetector
