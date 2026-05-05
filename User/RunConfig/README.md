@@ -13,25 +13,24 @@
   - 用途：使用清洗后的内录包做离线验证：
     `/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi` and
     `/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv`
-  - `VisionPreview` 默认关闭；需要录像或实时预览时只改它的运行时配置。
+  - 算法链路：`Camera -> Sync -> Detector -> Tracker`。
+  - 控制边界：内录只跑到 tracker 输出，不连接任何云台/发射执行器。
+  - `EnableDevCUsb = false`，不实例化 C 板 USB UART。
 
 - `hik.yaml`
   - 输入源：`HikCamera`
   - 同步模式：`CameraFrameSync::RAW_PROBE`
+  - 算法链路：`Camera -> Sync -> Detector -> Tracker`。
   - 用途：实机 Hik 相机、外部硬件触发和真实原始 IMU topic。
   - 运行要求：平台必须提供 `gimbal_gyro`、`gimbal_accl`、`gimbal_quat`，
-    并在硬件侧响应 `sensor_sync_cmd`。
+    并在硬件侧响应 `camera_sync_command`。
+  - `EnableDevCUsb = true`，Linux 侧以别名 `DevC-USB` 注册 C 板 USB CDC UART。
 
-## 预览配置
+## Tracker preset
 
-两个 preset 都实例化 `VisionPreview`，但默认关闭：
+模块源固定为：
+`QDU-Robomaster/ArmorTracker@codex/tracker-algorithm-20260502`。
 
-- `enabled`：总开关。
-- `record_raw`：原始视频和 topic TSV 落盘。
-- `realtime_preview`：实时窗口预览。
-- `overlay.detector`：绘制 detector 结果。
-- `overlay.tracker`：绘制 tracker 结果。
-- `overlay.candidate_debug`：显示候选调试统计。
 
 ## Generate
 

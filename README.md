@@ -2,12 +2,13 @@
 
 基于 `libxr` / `xrobot` 的 Linux 实物自瞄主仓。
 
-当前主线只维护这一条核心链路：
+当前主线只维护这一条核心算法链路：
 
 ```text
 Camera -> CameraFrameSync -> ArmorDetector -> ArmorTracker
-                                      \-> VisionPreview（可选）
 ```
+
+当前 BSP 只跑到 tracker 发布结果，Aimer 和 VisionPreview 暂不进入默认装配。
 
 ## Layout
 
@@ -27,7 +28,7 @@ libxr/                   框架 submodule
   - `CameraFrameSync` mode: `RAW_PROBE`
   - 默认签入的 `xrobot_main.hpp` 就是从这个 preset 生成
   - 需要真实 Hik 相机、硬件触发、以及板端发布 `gimbal_gyro/gimbal_accl/gimbal_quat`
-  - `VisionPreview` 默认关闭，需要实时预览或录像时只改它的配置
+  - 启用 `DevC-USB` Linux UART，按 C 板 USB CDC `16d0:1492` 自动发现设备
 
 - `User/RunConfig/capturefile.yaml`
   - 使用内录文件验证视觉链路
@@ -37,19 +38,7 @@ libxr/                   框架 submodule
     - `/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi`
     - `/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv`
   - 用于无 Hik 相机时跑通 sync/detector/tracker
-  - `VisionPreview` 默认关闭，需要离线落盘或预览时只改它的配置
-
-## 预览与落盘
-
-预览逻辑集中在 `VisionPreview` 模块中，`ArmorDetector` 和 `ArmorTracker`
-不直接创建窗口、写视频或绘制 overlay。
-
-`VisionPreview` 的主要开关：
-
-- `enabled`：总开关。
-- `record_raw`：写原始视频和 detector/tracker topic 数据。
-- `realtime_preview`：打开实时窗口。
-- `overlay.detector`、`overlay.tracker`、`overlay.candidate_debug`：分层控制绘制内容。
+  - 不构造 `DevC-USB`，也不实例化执行侧假反馈模块
 
 ## Generate
 

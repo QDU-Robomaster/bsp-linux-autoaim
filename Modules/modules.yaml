@@ -5,5 +5,4 @@ modules:
 - qdu-future/CameraSync
 - qdu-future/CameraFrameSync
 - qdu-future/ArmorDetector
-- qdu-future/ArmorTracker
-- qdu-future/VisionPreview
+- qdu-future/ArmorTracker@codex/tracker-algorithm-20260502

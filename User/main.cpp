@@ -8,11 +8,13 @@
 #include "libxr.hpp"
 #include "libxr_rw.hpp"
 #include "libxr_system.hpp"
+#include "linux_uart.hpp"
 #include "logger.hpp"
 #include "message.hpp"
 #include "ramfs.hpp"
 #include "terminal.hpp"
 #include "thread.hpp"
+#include "xrobot_constexpr.hpp"
 #include "xrobot_main.hpp"
 
 void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::RawData &log_data) =
@@ -84,6 +86,13 @@ int main(int, char **)
   LibXR::HardwareContainer peripherals{
       LibXR::Entry<LibXR::RamFS>({ramfs, {"ramfs"}}),
   };
+
+  if constexpr (AutoAimRunConfig::EnableDevCUsb)
+  {
+    static LibXR::LinuxUART devc_usb("16d0", "1492", 115200);
+    peripherals.Register(LibXR::Entry<LibXR::UART>({devc_usb, {"DevC-USB"}}));
+  }
+
   XRobotMain(peripherals);
   while (1)
   {
