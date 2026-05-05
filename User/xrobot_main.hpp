@@ -16,7 +16,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static HikCamera<AutoAimRunConfig::MainCameraInfo> camera(
       hw,
       appmgr,
-      HikCamera<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.camera_name = "gimbal", .image_topic_name = "camera_image", .imu_topic_name = "camera_imu", .gain = 32.0F, .exposure_time = 600.0F, .external_trigger = true, .acquisition_frame_rate = 249.0F, .grab_timeout_ms = 100, .image_node_num = 3}
+      HikCamera<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.camera_name = "gimbal", .image_topic_name = "camera_image", .imu_topic_name = "camera_imu", .gain = 15.0F, .exposure_time = 600.0F, .external_trigger = true, .acquisition_frame_rate = 249.0F, .grab_timeout_ms = 100, .image_node_num = 3}
   );
   static CameraFrameSync<
       AutoAimRunConfig::MainCameraInfo

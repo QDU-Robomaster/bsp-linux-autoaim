@@ -62,7 +62,7 @@ cmake -S . -B build -G Ninja -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime
 cmake --build build --target rm_auto_aim
 ```
 
-CI 只生成并构建 `capturefile.yaml`，避免依赖 Hik 相机和 C 板硬件环境。
+CI 会生成并编译 `capturefile.yaml` 和 `hik.yaml`，但不会运行程序或依赖硬件。
 
 ## Run
 

@@ -36,3 +36,14 @@ jobs:
         -DLIBXR_PRINT_ENABLE_POINTER=ON
     - name: build capturefile
       run: cmake --build build_capturefile --target rm_auto_aim
+    - name: generate hik preset
+      run: xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
+    - name: config cmake hik
+      run: >
+        cmake . -Bbuild_hik -G Ninja
+        -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime/cmake
+        -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
+        -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
+        -DLIBXR_PRINT_ENABLE_POINTER=ON
+    - name: build hik
+      run: cmake --build build_hik --target rm_auto_aim
