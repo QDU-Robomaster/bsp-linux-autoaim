@@ -2,6 +2,8 @@
 
 这个目录沿用 `bsp-dev-c` 的预设模式：仓库只保留一份生成后的
 `User/xrobot_main.hpp`，不同链路通过 `User/RunConfig/*.yaml` 生成。
+`User/xrobot.yaml` 是不带 `--config` 调用 `xrobot_gen_main` 时使用的默认配置，
+内容等价于 `hik.yaml`。
 
 ## Presets
 
@@ -35,6 +37,7 @@
 ## Generate
 
 ```bash
+xrobot_gen_main --output User/xrobot_main.hpp
 xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
 xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
 ```

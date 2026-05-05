@@ -17,6 +17,7 @@ Modules/                 模块依赖清单
 User/main.cpp            程序入口，初始化 LibXR 后调用 XRobotMain
 User/xrobot_main.hpp     当前默认生成结果，默认使用 hik preset
 User/xrobot_constexpr.hpp 当前默认生成常量
+User/xrobot.yaml         xrobot 默认配置，等价于 Hik 实机 preset
 User/RunConfig/          可选择的 xrobot 装配 preset
 libxr/                   框架 submodule
 ```
@@ -43,10 +44,12 @@ libxr/                   框架 submodule
 ## Generate
 
 ```bash
+xrobot_gen_main --output User/xrobot_main.hpp
 xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
 xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
 ```
 
+不带 `--config` 时，xrobot 会读取 `User/xrobot.yaml`，也就是 Hik 实机默认配置。
 `xrobot_main.hpp` 和 `xrobot_constexpr.hpp` 是生成文件。改 preset 后重新生成，再编译。
 
 ## Build
@@ -54,12 +57,12 @@ xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_ma
 ```bash
 git submodule update --init --recursive
 xrobot_setup
-xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
+xrobot_gen_main --output User/xrobot_main.hpp
 cmake -S . -B build -G Ninja -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime/cmake
 cmake --build build --target rm_auto_aim
 ```
 
-CI 会分别生成并构建 `capturefile.yaml` 和 `hik.yaml`。
+CI 只生成并构建 `capturefile.yaml`，避免依赖 Hik 相机和 C 板硬件环境。
 
 ## Run
 
