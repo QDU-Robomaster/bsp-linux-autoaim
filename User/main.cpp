@@ -12,6 +12,7 @@
 #include "logger.hpp"
 #include "message.hpp"
 #include "ramfs.hpp"
+#include "RobotGameReferee.hpp"
 #include "terminal.hpp"
 #include "thread.hpp"
 #include "xrobot_constexpr.hpp"
@@ -91,6 +92,10 @@ int main(int, char **)
   {
     static LibXR::LinuxUART devc_usb("16d0", "1492", 115200);
     peripherals.Register(LibXR::Entry<LibXR::UART>({devc_usb, {"DevC-USB"}}));
+
+    static LibXR::Topic::Domain host_domain("host");
+    static LibXR::Topic robot_game_referee_topic(
+        "robot_game_ref", sizeof(RobotGameReferee::Pack), &host_domain, true);
   }
 
   XRobotMain(peripherals);

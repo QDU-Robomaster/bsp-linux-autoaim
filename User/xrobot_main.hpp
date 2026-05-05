@@ -33,7 +33,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       appmgr,
       "DevC-USB",
       256,
-      {{"gimbal_gyro", "host"}, {"gimbal_accl", "host"}, {"gimbal_quat", "host"}, {"camera_sync_result", "host"}}
+      {{"gimbal_gyro", "host"}, {"gimbal_accl", "host"}, {"gimbal_quat", "host"}, {"camera_sync_result", "host"}, {"robot_game_ref", "host"}}
   );
   static SharedTopicClient shared_topic_tx(
       hw,
