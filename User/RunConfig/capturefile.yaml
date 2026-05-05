@@ -13,7 +13,15 @@ constexprs:
   MainCameraInfo:
     type: CameraTypes::CameraInfo
     value:
-      expr: "CameraTypes::CameraInfo{1440, 1080, 4320, CameraTypes::Encoding::BGR8, {2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0}, CameraTypes::DistortionModel::PLUMB_BOB, {-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569}, {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, {2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0}}"
+      width: 1440
+      height: 1080
+      step: 4320
+      encoding: {expr: CameraTypes::Encoding::BGR8}
+      camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
+      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
+      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
+      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+      projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
 
 modules:
   - id: camera
@@ -22,7 +30,14 @@ modules:
       Info: {constexpr: MainCameraInfo}
     constructor_args:
       runtime:
-        expr: "CaptureFileCamera<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.file_path = \"/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi\", .imu_csv_path = \"/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv\", .camera_name = \"capturefile_camera\", .image_topic_name = \"capturefile_image\", .imu_topic_name = \"capturefile_imu\", .realtime = true, .loop = false, .max_frames = 0}"
+        file_path: /home/xiao/data/camera_internal_recording_20260428/damo_clean.avi
+        imu_csv_path: /home/xiao/data/camera_internal_recording_20260428/damo_imu.csv
+        camera_name: capturefile_camera
+        image_topic_name: capturefile_image
+        imu_topic_name: capturefile_imu
+        realtime: true
+        loop: false
+        max_frames: 0
 
   - id: camera_frame_sync
     name: CameraFrameSync
@@ -31,7 +46,13 @@ modules:
     constructor_args:
       camera: '@camera'
       runtime:
-        expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU, .offset_us = 0, .host_topic_domain_name = \"libxr_def_domain\"}"
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU"}
+        offset_us: 0
+        host_topic_domain_name: libxr_def_domain
+        sync_command_topic_name: camera_sync_command
+        sync_result_topic_name: camera_sync_result
+        sync_probe_div: 3
+        sync_active_level: 1
 
   - id: armor_detector
     name: ArmorDetector
@@ -39,7 +60,14 @@ modules:
       Info: {constexpr: MainCameraInfo}
     constructor_args:
       cfg:
-        expr: "ArmorDetector<AutoAimRunConfig::MainCameraInfo>::Config{.detect_color = 2, .network = {.score_threshold = 0.1, .min_confidence = 0.1, .enable_quad_check = true, .min_quad_area_px = 16.0}}"
+        detect_color: 2
+        network:
+          score_threshold: 0.1
+          min_confidence: 0.1
+          enable_quad_check: true
+          min_quad_area_px: 16.0
+          openvino_device: AUTO_DETECT
+          openvino_performance_mode: LATENCY
       sync: '@camera_frame_sync'
 
   - id: armor_tracker
@@ -48,5 +76,40 @@ modules:
       Info: {constexpr: MainCameraInfo}
     constructor_args:
       cfg:
-        expr: "ArmorTracker<AutoAimRunConfig::MainCameraInfo>::Config{.limits = {.max_armor_distance = 30.0, .max_z_position = 30.0}, .match = {.max_match_distance = 0.15, .max_match_yaw_diff = 1.0}, .thresholds = {.tracking_thres = 5, .lost_time_thres = 0.3}, .solver = {.k = 0.092, .bias_time = 100, .s_bias = 0.19133, .z_bias = 0.21265, .calculate_mode = SolveTrajectory::NORMAL, .table_config = TrajectoryTable::TableConfig(13.0, 0.0, 1.0, -1.0, 0.01, \"table.bin\")}, .ekf = {.sigma2_q_xyz = 20.0, .sigma2_q_yaw = 100.0, .sigma2_q_r = 800.0}, .geometry = {.initial_radius = 0.26, .min_radius = 0.12, .max_radius = 0.4}, .noise = {.r_xyz_factor = 0.05, .r_yaw = 0.02}, .frames = {.rotation = {0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, .translation = {0.136068364765315, -0.041861764663827829, 0.0089956658836358675}}}"
+        limits:
+          max_armor_distance: 30.0
+          max_z_position: 30.0
+        match:
+          max_match_distance: 0.15
+          max_match_yaw_diff: 1.0
+        thresholds:
+          tracking_thres: 5
+          lost_time_thres: 0.3
+        solver:
+          k: 0.092
+          bias_time: 100
+          s_bias: 0.19133
+          z_bias: 0.21265
+          calculate_mode: {expr: SolveTrajectory::NORMAL}
+          table_config:
+            max_x: 13.0
+            min_x: 0.0
+            max_y: 1.0
+            min_y: -1.0
+            resolution: 0.01
+            filename: table.bin
+        ekf:
+          sigma2_q_xyz: 20.0
+          sigma2_q_yaw: 100.0
+          sigma2_q_r: 800.0
+        geometry:
+          initial_radius: 0.26
+          min_radius: 0.12
+          max_radius: 0.4
+        noise:
+          r_xyz_factor: 0.05
+          r_yaw: 0.02
+        frames:
+          rotation: [0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461]
+          translation: [0.136068364765315, -0.041861764663827829, 0.0089956658836358675]
       sync: '@camera_frame_sync'

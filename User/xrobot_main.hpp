@@ -26,32 +26,32 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       hw,
       appmgr,
       camera,
-      CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, .offset_us = 0}
+      {CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, 0, "host", "camera_sync_command", "camera_sync_result", 3, 1}
   );
   static SharedTopic shared_topic_rx(
       hw,
       appmgr,
       "DevC-USB",
       256,
-      {SharedTopic::TopicConfig{"gimbal_gyro", "host"}, SharedTopic::TopicConfig{"gimbal_accl", "host"}, SharedTopic::TopicConfig{"gimbal_quat", "host"}, SharedTopic::TopicConfig{"camera_sync_result", "host"}}
+      {{"gimbal_gyro", "host"}, {"gimbal_accl", "host"}, {"gimbal_quat", "host"}, {"camera_sync_result", "host"}}
   );
   static SharedTopicClient shared_topic_tx(
       hw,
       appmgr,
       "DevC-USB",
       16,
-      {SharedTopicClient::TopicConfig{"camera_sync_command", "host"}}
+      {{"camera_sync_command", "host"}}
   );
   static ArmorDetector<AutoAimRunConfig::MainCameraInfo> armor_detector(
       hw,
       appmgr,
-      ArmorDetector<AutoAimRunConfig::MainCameraInfo>::Config{.detect_color = 2, .network = {.score_threshold = 0.1, .min_confidence = 0.1, .enable_quad_check = true, .min_quad_area_px = 16.0}},
+      {2, {0.1, 0.1, true, 16.0, "AUTO_DETECT", "LATENCY"}},
       camera_frame_sync
   );
   static ArmorTracker<AutoAimRunConfig::MainCameraInfo> armor_tracker(
       hw,
       appmgr,
-      ArmorTracker<AutoAimRunConfig::MainCameraInfo>::Config{.limits = {.max_armor_distance = 30.0, .max_z_position = 30.0}, .match = {.max_match_distance = 0.15, .max_match_yaw_diff = 1.0}, .thresholds = {.tracking_thres = 5, .lost_time_thres = 0.3}, .solver = {.k = 0.092, .bias_time = 100, .s_bias = 0.19133, .z_bias = 0.21265, .calculate_mode = SolveTrajectory::NORMAL, .table_config = TrajectoryTable::TableConfig(13.0, 0.0, 1.0, -1.0, 0.01, "table.bin")}, .ekf = {.sigma2_q_xyz = 20.0, .sigma2_q_yaw = 100.0, .sigma2_q_r = 800.0}, .geometry = {.initial_radius = 0.26, .min_radius = 0.12, .max_radius = 0.4}, .noise = {.r_xyz_factor = 0.05, .r_yaw = 0.02}, .frames = {.rotation = {0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, .translation = {0.136068364765315, -0.041861764663827829, 0.0089956658836358675}}},
+      {{30.0, 30.0}, {0.15, 1.0}, {5, 0.3}, {0.092, 100, 0.19133, 0.21265, SolveTrajectory::NORMAL, {13.0, 0.0, 1.0, -1.0, 0.01, "table.bin"}}, {20.0, 100.0, 800.0}, {0.26, 0.12, 0.4}, {0.05, 0.02}, {{0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, {0.136068364765315, -0.04186176466382783, 0.008995665883635868}}},
       camera_frame_sync
   );
 
