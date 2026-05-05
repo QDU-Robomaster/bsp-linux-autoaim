@@ -25,12 +25,28 @@ jobs:
         apt-get install -y --no-install-recommends libgpiod-dev
     - name: get modules && setup
       run: xrobot_setup
+    - name: detect OpenVINO
+      shell: bash
+      run: |
+        set -euo pipefail
+        openvino_dir=""
+        for root in /opt /usr/local /usr; do
+          openvino_dir="$(find "$root" -type d -path '*/runtime/cmake' -print -quit 2>/dev/null || true)"
+          if [ -n "$openvino_dir" ]; then
+            break
+          fi
+        done
+        if [ -z "$openvino_dir" ]; then
+          echo "OpenVINO runtime CMake directory not found" >&2
+          exit 1
+        fi
+        echo "OPENVINO_DIR=$openvino_dir" >> "$GITHUB_ENV"
     - name: generate capturefile preset
       run: xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
     - name: config cmake capturefile
       run: >
         cmake . -Bbuild_capturefile -G Ninja
-        -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime/cmake
+        -DOpenVINO_DIR="$OPENVINO_DIR"
         -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
         -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
         -DLIBXR_PRINT_ENABLE_POINTER=ON
@@ -41,7 +57,7 @@ jobs:
     - name: config cmake hik
       run: >
         cmake . -Bbuild_hik -G Ninja
-        -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime/cmake
+        -DOpenVINO_DIR="$OPENVINO_DIR"
         -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
         -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
         -DLIBXR_PRINT_ENABLE_POINTER=ON

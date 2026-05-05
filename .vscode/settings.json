@@ -1,0 +1,93 @@
+{
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "files.autoSave": "afterDelay",
+    "files.associations": {
+        "*.c": "c",
+        "*.h": "c",
+        "*.cpp": "cpp",
+        "*.hpp": "cpp"
+    },
+    "editor.trimAutoWhitespace": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": false,
+    "editor.inlineSuggest.enabled": true,
+    "editor.parameterHints.enabled": true,
+    "editor.snippetSuggestions": "bottom",
+    "editor.suggest.showStatusBar": true,
+    "editor.inlayHints.enabled": "offUnlessPressed",
+    "cmake.useCMakePresets": "never",
+    "cmake.configureOnOpen": false,
+    "cmake.buildDirectory": "${workspaceFolder}/build/debug",
+    "cmake.configureSettings": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+    },
+    "cmake.options.statusBarVisibility": "compact",
+    "cmake.options.advanced": {
+        "configure": {
+            "projectStatusVisibility": "hidden"
+        },
+        "configurePreset": {
+            "statusBarVisibility": "hidden"
+        },
+        "buildPreset": {
+            "statusBarVisibility": "hidden"
+        },
+        "testPreset": {
+            "statusBarVisibility": "hidden"
+        },
+        "packagePreset": {
+            "statusBarVisibility": "hidden"
+        },
+        "workflowPreset": {
+            "statusBarVisibility": "hidden"
+        },
+        "kit": {
+            "statusBarVisibility": "visible",
+            "statusBarLength": 18
+        },
+        "variant": {
+            "statusBarVisibility": "hidden"
+        },
+        "folder": {
+            "statusBarVisibility": "hidden",
+            "projectStatusVisibility": "hidden"
+        },
+        "buildTarget": {
+            "statusBarVisibility": "compact",
+            "statusBarLength": 18
+        },
+        "launchTarget": {
+            "statusBarVisibility": "hidden"
+        },
+        "build": {
+            "statusBarVisibility": "icon",
+            "projectStatusVisibility": "hidden"
+        },
+        "debug": {
+            "statusBarVisibility": "hidden",
+            "projectStatusVisibility": "hidden"
+        },
+        "launch": {
+            "statusBarVisibility": "hidden",
+            "projectStatusVisibility": "hidden"
+        }
+    },
+    "cmake.parallelJobs": 24,
+    "cmake.ctest.allowParallelJobs": true,
+    "cmake.ctest.parallelJobs": 24,
+    "cmake.preferredGenerators": [
+        "Ninja"
+    ],
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.autocomplete": "disabled",
+    "C_Cpp.errorSquiggles": "disabled",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build/debug",
+        "--query-driver=/usr/bin/c++,/usr/bin/g++,/usr/bin/cc,/usr/bin/gcc",
+        "--background-index",
+        "--clang-tidy"
+    ]
+}

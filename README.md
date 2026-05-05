@@ -1,72 +1,75 @@
 # BSP Linux AutoAim
 
-基于 `libxr` / `xrobot` 的 Linux 实物自瞄主仓。
-
-当前主线只维护这一条核心算法链路：
-
-```text
-Camera -> CameraFrameSync -> ArmorDetector -> ArmorTracker
-```
-
-当前 BSP 只跑到 tracker 发布结果，Aimer 和 VisionPreview 暂不进入默认装配。
+Linux 实物自瞄 BSP，基于 `libxr` / `xrobot` 组织工程。
 
 ## Layout
 
 ```text
-Modules/                 模块依赖清单
-User/main.cpp            程序入口，初始化 LibXR 后调用 XRobotMain
-User/xrobot_main.hpp     当前默认生成结果，默认使用 hik preset
-User/xrobot_constexpr.hpp 当前默认生成常量
-User/xrobot.yaml         xrobot 默认配置，等价于 Hik 实机 preset
-User/RunConfig/          可选择的 xrobot 装配 preset
-libxr/                   框架 submodule
+Modules/                  模块目录
+User/                     用户配置和生成入口
+User/RunConfig/           可选运行配置
+libxr/                    libxr submodule
+CMakePresets.json         命令行 CMake preset
+.vscode/                  VS Code Remote SSH 配置
 ```
 
-## Presets
+## Prepare
 
-- `User/RunConfig/hik.yaml`
-  - 实机 Hik 相机入口
-  - `CameraFrameSync` mode: `RAW_PROBE`
-  - 默认签入的 `xrobot_main.hpp` 就是从这个 preset 生成
-  - 需要真实 Hik 相机、硬件触发、以及板端发布 `gimbal_gyro/gimbal_accl/gimbal_quat`
-  - 启用 `DevC-USB` Linux UART，按 C 板 USB CDC `16d0:1492` 自动发现设备
-  - 通过 `SharedTopic` 接收 MCU IMU/同步回执，通过 `SharedTopicClient` 发送同步命令
+模块和 submodule 由使用者按项目约定初始化。开始构建前确认这些目录已经存在：
 
-- `User/RunConfig/capturefile.yaml`
-  - 使用内录文件验证视觉链路
-  - `CameraFrameSync` mode: `LATEST_IMU`
-  - 使用独立的 `capturefile_*` topic 名，避免和实机入口冲突
-  - 数据文件：
-    - `/home/xiao/data/camera_internal_recording_20260428/damo_clean.avi`
-    - `/home/xiao/data/camera_internal_recording_20260428/damo_imu.csv`
-  - 用于无 Hik 相机时跑通 sync/detector/tracker
-  - 不构造 `DevC-USB`，也不实例化执行侧假反馈模块
+```text
+libxr/
+Modules/
+```
+
+如果 OpenVINO 不在 CMake 默认搜索路径里，在本机环境中设置 `OpenVINO_DIR`
+或 `CMAKE_PREFIX_PATH`。
 
 ## Generate
 
+默认配置：
+
 ```bash
-xrobot_gen_main --output User/xrobot_main.hpp
-xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
-xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
+python3 -m xrobot.GenerateMain --output User/xrobot_main.hpp
 ```
 
-不带 `--config` 时，xrobot 会读取 `User/xrobot.yaml`，也就是 Hik 实机默认配置。
-`xrobot_main.hpp` 和 `xrobot_constexpr.hpp` 是生成文件。改 preset 后重新生成，再编译。
+指定运行配置：
+
+```bash
+python3 -m xrobot.GenerateMain --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
+python3 -m xrobot.GenerateMain --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
+```
+
+`User/xrobot_main.hpp` 和 `User/xrobot_constexpr.hpp` 是生成文件。
 
 ## Build
 
 ```bash
-git submodule update --init --recursive
-xrobot_setup
-xrobot_gen_main --output User/xrobot_main.hpp
-cmake -S . -B build -G Ninja -DOpenVINO_DIR=/opt/intel/openvino_2025.4.0/runtime/cmake
-cmake --build build --target rm_auto_aim
+cmake -S . -B build/debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build/debug --target rm_auto_aim -j$(nproc)
 ```
-
-CI 会生成并编译 `capturefile.yaml` 和 `hik.yaml`，但不会运行程序或依赖硬件。
 
 ## Run
 
 ```bash
-./build/rm_auto_aim
+./build/debug/rm_auto_aim
 ```
+
+## VS Code
+
+Linux BSP 预期在 Remote SSH 窗口里使用，不需要 Docker / Dev Container。
+
+推荐扩展：
+
+- `ms-vscode.cmake-tools`
+- `llvm-vs-code-extensions.vscode-clangd`
+- `webfreak.debug`
+- `xrobot.xrobot`
+
+常用入口：
+
+- `CMake: Select a Kit`
+- `Tasks: Run Task` -> `Build: capturefile debug`
+- `Tasks: Run Task` -> `Build: hik debug`
+- `Run and Debug` -> `Linux: Debug capturefile replay`
+- `Run and Debug` -> `Linux: Debug Hik hardware`

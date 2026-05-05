@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Linux: Debug capturefile replay",
+            "type": "gdb",
+            "request": "launch",
+            "target": "${workspaceFolder}/build/debug/rm_auto_aim",
+            "cwd": "${workspaceFolder}",
+            "valuesFormatting": "parseText",
+            "preLaunchTask": "Build: capturefile debug"
+        },
+        {
+            "name": "Linux: Debug Hik hardware",
+            "type": "gdb",
+            "request": "launch",
+            "target": "${workspaceFolder}/build/debug/rm_auto_aim",
+            "cwd": "${workspaceFolder}",
+            "valuesFormatting": "parseText",
+            "preLaunchTask": "Build: hik debug"
+        }
+    ]
+}

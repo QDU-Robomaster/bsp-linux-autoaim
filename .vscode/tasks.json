@@ -1,0 +1,131 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "XRobot: generate capturefile preset",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-m",
+                "xrobot.GenerateMain",
+                "--config",
+                "User/RunConfig/capturefile.yaml",
+                "--output",
+                "User/xrobot_main.hpp"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "windows": {
+                "command": "Write-Host 'Linux BSP tasks must run in a VS Code Remote-SSH Linux window, not a local Windows folder.'; Write-Host 'Connect to Remote-SSH host ubuntu24-7002 and open this repo on the target, then run F5/tasks there.'; exit 1",
+                "args": []
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "XRobot: generate hik preset",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "-m",
+                "xrobot.GenerateMain",
+                "--config",
+                "User/RunConfig/hik.yaml",
+                "--output",
+                "User/xrobot_main.hpp"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "windows": {
+                "command": "Write-Host 'Linux BSP tasks must run in a VS Code Remote-SSH Linux window, not a local Windows folder.'; Write-Host 'Connect to Remote-SSH host ubuntu24-7002 and open this repo on the target, then run F5/tasks there.'; exit 1",
+                "args": []
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: configure debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S",
+                ".",
+                "-B",
+                "build/debug",
+                "-G",
+                "Ninja",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "windows": {
+                "command": "Write-Host 'Linux BSP tasks must run in a VS Code Remote-SSH Linux window, not a local Windows folder.'; Write-Host 'Connect to Remote-SSH host ubuntu24-7002 and open this repo on the target, then run F5/tasks there.'; exit 1",
+                "args": []
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: build debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build/debug",
+                "--target",
+                "rm_auto_aim",
+                "--parallel",
+                "24"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "windows": {
+                "command": "Write-Host 'Linux BSP tasks must run in a VS Code Remote-SSH Linux window, not a local Windows folder.'; Write-Host 'Connect to Remote-SSH host ubuntu24-7002 and open this repo on the target, then run F5/tasks there.'; exit 1",
+                "args": []
+            },
+            "group": "build",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build: capturefile debug",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "XRobot: generate capturefile preset",
+                "CMake: configure debug",
+                "CMake: build debug"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Build: hik debug",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "XRobot: generate hik preset",
+                "CMake: configure debug",
+                "CMake: build debug"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run: capturefile replay",
+            "type": "shell",
+            "command": "./build/debug/rm_auto_aim",
+            "dependsOn": [
+                "Build: capturefile debug"
+            ],
+            "dependsOrder": "sequence",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "windows": {
+                "command": "Write-Host 'Linux BSP tasks must run in a VS Code Remote-SSH Linux window, not a local Windows folder.'; Write-Host 'Connect to Remote-SSH host ubuntu24-7002 and open this repo on the target, then run F5/tasks there.'; exit 1",
+                "args": []
+            },
+            "problemMatcher": []
+        }
+    ]
+}
