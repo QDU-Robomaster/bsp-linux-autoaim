@@ -54,6 +54,7 @@ modules:
         sync_result_topic_name: camera_sync_result
         sync_probe_div: 3
         sync_active_level: 1
+        target_trigger_hz: {expr: 50.0F}
 
   - id: shared_topic_rx
     name: SharedTopic
