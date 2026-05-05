@@ -27,6 +27,8 @@
   - 运行要求：平台必须提供 `gimbal_gyro`、`gimbal_accl`、`gimbal_quat`，
     并在硬件侧响应 `camera_sync_command`。
   - `EnableDevCUsb = true`，Linux 侧以别名 `DevC-USB` 注册 C 板 USB CDC UART。
+  - `SharedTopic` 接收 `gimbal_gyro/gimbal_accl/gimbal_quat/camera_sync_result`，
+    `SharedTopicClient` 发送 `camera_sync_command`。
 
 ## Tracker preset
 

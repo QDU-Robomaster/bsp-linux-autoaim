@@ -30,6 +30,7 @@ libxr/                   框架 submodule
   - 默认签入的 `xrobot_main.hpp` 就是从这个 preset 生成
   - 需要真实 Hik 相机、硬件触发、以及板端发布 `gimbal_gyro/gimbal_accl/gimbal_quat`
   - 启用 `DevC-USB` Linux UART，按 C 板 USB CDC `16d0:1492` 自动发现设备
+  - 通过 `SharedTopic` 接收 MCU IMU/同步回执，通过 `SharedTopicClient` 发送同步命令
 
 - `User/RunConfig/capturefile.yaml`
   - 使用内录文件验证视觉链路

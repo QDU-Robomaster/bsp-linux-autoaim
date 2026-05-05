@@ -33,6 +33,22 @@ modules:
       runtime:
         expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, .offset_us = 0}"
 
+  - id: shared_topic_rx
+    name: SharedTopic
+    constructor_args:
+      uart_name: "DevC-USB"
+      buffer_size: 256
+      topic_configs:
+        expr: "{SharedTopic::TopicConfig{\"gimbal_gyro\", \"host\"}, SharedTopic::TopicConfig{\"gimbal_accl\", \"host\"}, SharedTopic::TopicConfig{\"gimbal_quat\", \"host\"}, SharedTopic::TopicConfig{\"camera_sync_result\", \"host\"}}"
+
+  - id: shared_topic_tx
+    name: SharedTopicClient
+    constructor_args:
+      uart_name: "DevC-USB"
+      slot_count: 16
+      topic_configs:
+        expr: "{SharedTopicClient::TopicConfig{\"camera_sync_command\", \"host\"}}"
+
   - id: armor_detector
     name: ArmorDetector
     template_args:

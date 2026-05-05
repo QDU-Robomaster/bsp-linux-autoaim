@@ -4,6 +4,8 @@
 // Module headers
 #include "HikCamera.hpp"
 #include "CameraFrameSync.hpp"
+#include "SharedTopic.hpp"
+#include "SharedTopicClient.hpp"
 #include "ArmorDetector.hpp"
 #include "ArmorTracker.hpp"
 #include "xrobot_constexpr.hpp"
@@ -25,6 +27,20 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       appmgr,
       camera,
       CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::RuntimeParam{.mode = CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, .offset_us = 0}
+  );
+  static SharedTopic shared_topic_rx(
+      hw,
+      appmgr,
+      "DevC-USB",
+      256,
+      {SharedTopic::TopicConfig{"gimbal_gyro", "host"}, SharedTopic::TopicConfig{"gimbal_accl", "host"}, SharedTopic::TopicConfig{"gimbal_quat", "host"}, SharedTopic::TopicConfig{"camera_sync_result", "host"}}
+  );
+  static SharedTopicClient shared_topic_tx(
+      hw,
+      appmgr,
+      "DevC-USB",
+      16,
+      {SharedTopicClient::TopicConfig{"camera_sync_command", "host"}}
   );
   static ArmorDetector<AutoAimRunConfig::MainCameraInfo> armor_detector(
       hw,
