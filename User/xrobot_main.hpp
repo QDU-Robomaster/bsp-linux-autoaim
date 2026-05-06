@@ -45,7 +45,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorDetector<AutoAimRunConfig::MainCameraInfo> armor_detector(
       hw,
       appmgr,
-      {2, {0.1, 0.1, true, 16.0, "AUTO_DETECT", "LATENCY"}},
+      {2, {0.1, 0.1, true, 16.0, "AUTO_DETECT", "LATENCY"}, true, "host", "robot_game_ref"},
       camera_frame_sync
   );
   static ArmorTracker<AutoAimRunConfig::MainCameraInfo> armor_tracker(

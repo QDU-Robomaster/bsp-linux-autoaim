@@ -91,6 +91,9 @@ modules:
           min_quad_area_px: 16.0
           openvino_device: AUTO_DETECT
           openvino_performance_mode: LATENCY
+        referee_auto_detect_color: true
+        referee_domain: host
+        referee_topic: robot_game_ref
       sync: '@camera_frame_sync'
 
   - id: armor_tracker
