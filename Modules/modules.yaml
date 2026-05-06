@@ -6,5 +6,6 @@ modules:
 - qdu-future/CameraFrameSync
 - xrobot-org/SharedTopic
 - xrobot-org/SharedTopicClient
+- qdu-future/VisionPreview
 - qdu-future/ArmorDetector
 - qdu-future/ArmorTracker@codex/tracker-algorithm-20260502
