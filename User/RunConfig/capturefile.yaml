@@ -83,6 +83,16 @@ modules:
           preview_wait_key_ms: 1
           # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
           queue_capacity: 1
+          # 输出模式：window 使用 OpenCV 窗口；mjpeg 使用 HTTP MJPEG 推流。
+          output_mode: window
+          # MJPEG 监听地址；0.0.0.0 表示允许局域网访问。
+          web_bind_address: 0.0.0.0
+          # MJPEG 监听端口；浏览器访问 http://<上位机IP>:8080/。
+          web_port: 8080
+          # MJPEG JPEG 编码质量，范围 1~100。
+          web_jpeg_quality: 80
+          # MJPEG stream 名；直接取流路径 /stream/armor_detector.mjpg。
+          web_stream_name: armor_detector
       sync: '@camera_frame_sync'
 
   - id: armor_tracker
