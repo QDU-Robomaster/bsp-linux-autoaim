@@ -18,7 +18,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static HikCamera<AutoAimRunConfig::MainCameraInfo> camera(
       hw,
       appmgr,
-      {"gimbal", "camera_image", "camera_imu", 16.0F, 2000.0F, true, 249.0F, 100, 3}
+      {"gimbal", "camera_image", "camera_imu", 16.0F, 2000.0F, true, 249.0F, 100, 3, false}
   );
   static CameraFrameSync<
       AutoAimRunConfig::MainCameraInfo

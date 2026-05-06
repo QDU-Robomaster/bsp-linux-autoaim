@@ -39,6 +39,7 @@ modules:
         acquisition_frame_rate: {expr: 249.0F}
         grab_timeout_ms: 100
         image_node_num: 3
+        rotate_180: false
 
   - id: camera_frame_sync
     name: CameraFrameSync
