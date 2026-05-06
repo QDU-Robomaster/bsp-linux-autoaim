@@ -1,9 +1,14 @@
 #include <chrono>
+#include <cerrno>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
 
 #include "app_framework.hpp"
 #include "libxr.hpp"
@@ -60,6 +65,25 @@ static_assert(sizeof(RobotGameRefereeGame) == 11);
 static_assert(sizeof(RobotGameRefereeLauncher) == 7);
 static_assert(sizeof(RobotGameRefereeSummary) == 31);
 
+static int AcquireBspLock()
+{
+  constexpr const char *lock_path = "/tmp/xrobot-autoaim-camera.lock";
+  int fd = open(lock_path, O_CREAT | O_RDWR | O_CLOEXEC, 0666);
+  if (fd < 0)
+  {
+    XR_LOG_ERROR("failed to open BSP lock %s: %s", lock_path, std::strerror(errno));
+    return -1;
+  }
+
+  if (flock(fd, LOCK_EX | LOCK_NB) != 0)
+  {
+    XR_LOG_ERROR("another autoaim BSP is already running (%s)", lock_path);
+    close(fd);
+    return -1;
+  }
+  return fd;
+}
+
 void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::RawData &log_data) =
     [](bool, LibXR::Topic tp, LibXR::RawData &log_data)
 {
@@ -111,6 +135,13 @@ void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::RawData &log_data) =
 int main(int, char **)
 {
   LibXR::PlatformInit();
+
+  const int bsp_lock_fd = AcquireBspLock();
+  if (bsp_lock_fd < 0)
+  {
+    return 1;
+  }
+  (void)bsp_lock_fd;
 
   XR_LOG_PASS("Platform initialized");
 
