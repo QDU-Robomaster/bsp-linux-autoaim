@@ -2,9 +2,14 @@ name: build test
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - master
+      - "codex/**"
   pull_request:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - master
 
 jobs:
   build:
@@ -63,3 +68,14 @@ jobs:
         -DLIBXR_PRINT_ENABLE_POINTER=ON
     - name: build hik
       run: cmake --build build_hik --target rm_auto_aim
+    - name: generate hik_record preset
+      run: xrobot_gen_main --config User/RunConfig/hik_record.yaml --output User/xrobot_main.hpp
+    - name: config cmake hik_record
+      run: >
+        cmake . -Bbuild_hik_record -G Ninja
+        -DOpenVINO_DIR="$OPENVINO_DIR"
+        -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
+        -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
+        -DLIBXR_PRINT_ENABLE_POINTER=ON
+    - name: build hik_record
+      run: cmake --build build_hik_record --target rm_auto_aim

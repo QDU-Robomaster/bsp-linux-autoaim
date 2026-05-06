@@ -25,6 +25,15 @@ Modules/
 如果 OpenVINO 不在 CMake 默认搜索路径里，在本机环境中设置 `OpenVINO_DIR`
 或 `CMAKE_PREFIX_PATH`。
 
+## Presets
+
+- `User/RunConfig/hik.yaml`：实机 Hik 相机入口，使用硬件触发和真实 IMU topic。
+- `User/RunConfig/hik_record.yaml`：实机录制专用入口，只实例化相机、同步和
+  SharedTopic 收发，不实例化检测和跟踪模块。它开启 CameraBase 图像内录和
+  CameraFrameSync 同步 IMU 记录。运行中写到同级 `.tmp` 目录，并先写 `.recording`
+  恢复标记；断电后下次启动自动整理为 `runs/camera_record/<时间>_<相机名>/`。
+- `User/RunConfig/capturefile.yaml`：使用内录文件验证视觉链路，不依赖 Hik 相机和 C 板。
+
 ## Generate
 
 默认配置：
@@ -37,6 +46,7 @@ python3 -m xrobot.GenerateMain --output User/xrobot_main.hpp
 
 ```bash
 python3 -m xrobot.GenerateMain --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
+python3 -m xrobot.GenerateMain --config User/RunConfig/hik_record.yaml --output User/xrobot_main.hpp
 python3 -m xrobot.GenerateMain --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
 ```
 
