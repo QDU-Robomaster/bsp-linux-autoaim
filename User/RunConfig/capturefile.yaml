@@ -110,19 +110,6 @@ modules:
         thresholds:
           tracking_thres: 5
           lost_time_thres: 0.3
-        solver:
-          k: 0.092
-          bias_time: 100
-          s_bias: 0.19133
-          z_bias: 0.21265
-          calculate_mode: {expr: SolveTrajectory::NORMAL}
-          table_config:
-            max_x: 13.0
-            min_x: 0.0
-            max_y: 1.0
-            min_y: -1.0
-            resolution: 0.01
-            filename: table.bin
         ekf:
           sigma2_q_xyz: 20.0
           sigma2_q_yaw: 100.0
@@ -137,4 +124,23 @@ modules:
         frames:
           rotation: [0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461]
           translation: [0.136068364765315, -0.041861764663827829, 0.0089956658836358675]
+        model:
+          enable_pair_dz: true
+          measurement_recenter_alpha: 0.25
+          quality_recenter: true
+          enable_pair_geometry: false
+          enable_output_meas_anchor: false
+          enable_aimer_meas_anchor: true
+          enable_fixed_pose_yaw_opt: false
+        preview:
+          # tracker 实时预览总开关；false 时不启动预览线程，CI/回放默认关闭。
+          enabled: false
+          # OpenCV 窗口名，只影响本模块预览窗口标题。
+          preview_window_name: armor_tracker_preview
+          # 显示缩放比例，只影响窗口画面，不改变 tracker 输入图像。
+          preview_scale: 0.5
+          # cv::waitKey 事件轮询时间，单位 ms。
+          preview_wait_key_ms: 1
+          # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
+          queue_capacity: 1
       sync: '@camera_frame_sync'

@@ -8,4 +8,4 @@ modules:
 - xrobot-org/SharedTopicClient
 - qdu-future/VisionPreview
 - qdu-future/ArmorDetector
-- qdu-future/ArmorTracker@codex/tracker-algorithm-20260502
+- qdu-future/ArmorTracker

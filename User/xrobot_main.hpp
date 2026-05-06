@@ -26,7 +26,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       hw,
       appmgr,
       camera,
-      {CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, 0, "host", "camera_sync_command", "camera_sync_result", 3, 1}
+      {CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE, 0, "host", "camera_sync_command", "camera_sync_result", 3, 1, 50.0F}
   );
   static SharedTopic shared_topic_rx(
       hw,
@@ -51,7 +51,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorTracker<AutoAimRunConfig::MainCameraInfo> armor_tracker(
       hw,
       appmgr,
-      {{30.0, 30.0}, {0.15, 1.0}, {5, 0.3}, {0.092, 100, 0.19133, 0.21265, SolveTrajectory::NORMAL, {13.0, 0.0, 1.0, -1.0, 0.01, "table.bin"}}, {20.0, 100.0, 800.0}, {0.26, 0.12, 0.4}, {0.05, 0.02}, {{0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, {0.136068364765315, -0.04186176466382783, 0.008995665883635868}}},
+      {{30.0, 30.0}, {0.15, 1.0}, {5, 0.3}, {20.0, 100.0, 800.0}, {0.26, 0.12, 0.4}, {0.05, 0.02}, {{0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, {0.136068364765315, -0.04186176466382783, 0.008995665883635868}}, {true, 0.25, true, false, false, true, false}, {false, "armor_tracker_preview", 0.5, 1, 1}},
       camera_frame_sync
   );
 

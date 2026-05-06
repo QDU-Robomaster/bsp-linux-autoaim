@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstdint>
 #include <ctime>
 #include <fstream>
 #include <iomanip>
@@ -12,11 +13,52 @@
 #include "logger.hpp"
 #include "message.hpp"
 #include "ramfs.hpp"
-#include "RobotGameReferee.hpp"
 #include "terminal.hpp"
 #include "thread.hpp"
 #include "xrobot_constexpr.hpp"
 #include "xrobot_main.hpp"
+
+struct [[gnu::packed]] RobotGameRefereeStatus
+{
+  uint8_t robot_id{};
+  uint8_t robot_level{};
+  uint16_t remain_hp{};
+  uint16_t max_hp{};
+  uint16_t shooter_cooling_value{};
+  uint16_t shooter_heat_limit{};
+  uint16_t chassis_power_limit{};
+  uint8_t power_gimbal_output : 1 {};
+  uint8_t power_chassis_output : 1 {};
+  uint8_t power_launcher_output : 1 {};
+};
+
+struct [[gnu::packed]] RobotGameRefereeGame
+{
+  uint8_t game_type : 4 {};
+  uint8_t game_progress : 4 {};
+  uint16_t stage_remain_time{};
+  uint64_t sync_time_stamp{};
+};
+
+struct [[gnu::packed]] RobotGameRefereeLauncher
+{
+  uint8_t bullet_type{};
+  uint8_t launcher_id{};
+  uint8_t bullet_freq{};
+  float bullet_speed{};
+};
+
+struct [[gnu::packed]] RobotGameRefereeSummary
+{
+  RobotGameRefereeStatus robot_status{};
+  RobotGameRefereeGame game_status{};
+  RobotGameRefereeLauncher launcher_data{};
+};
+
+static_assert(sizeof(RobotGameRefereeStatus) == 13);
+static_assert(sizeof(RobotGameRefereeGame) == 11);
+static_assert(sizeof(RobotGameRefereeLauncher) == 7);
+static_assert(sizeof(RobotGameRefereeSummary) == 31);
 
 void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::RawData &log_data) =
     [](bool, LibXR::Topic tp, LibXR::RawData &log_data)
@@ -95,7 +137,7 @@ int main(int, char **)
 
     static LibXR::Topic::Domain host_domain("host");
     static LibXR::Topic robot_game_referee_topic(
-        "robot_game_ref", sizeof(RobotGameReferee::Pack), &host_domain, true);
+        "robot_game_ref", sizeof(RobotGameRefereeSummary), &host_domain, true);
   }
 
   XRobotMain(peripherals);
