@@ -28,9 +28,9 @@ Modules/
 ## Presets
 
 - `User/RunConfig/hik.yaml`：实机 Hik 相机入口，使用硬件触发和真实 IMU topic。
-  Hik 采集几何为居中 `1280x1024` ROI，内参主点已按 ROI offset 平移。
+  Hik 使用 `2x2` 下采样输出 `720x540`，detector 输入为 `512x384`，触发目标为 `100Hz`。
 - `User/RunConfig/hik_record.yaml`：实机录制专用入口，只实例化相机、同步和
-  SharedTopic 收发，不实例化检测和跟踪模块，采集几何同样为 `1280x1024` ROI。
+  SharedTopic 收发，不实例化检测和跟踪模块，采集几何同样为 `720x540`。
   它开启 CameraBase 图像内录和 CameraFrameSync 同步 IMU 记录。运行中写到同级
   `.tmp` 目录，并先写 `.recording` 恢复标记；断电后下次启动自动整理为
   `runs/camera_record/<时间>_<相机名>/`。
