@@ -22,12 +22,24 @@ constexprs:
       distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
       rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
       projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
+  HikCameraInfo:
+    type: CameraTypes::CameraInfo
+    value:
+      width: 1280
+      height: 1024
+      step: 3840
+      encoding: {expr: CameraTypes::Encoding::BGR8}
+      camera_matrix: [2328.6857198980888, 0.0, 653.35646250924742, 0.0, 2328.6701077899961, 512.61872869227727, 0.0, 0.0, 1.0]
+      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
+      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
+      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+      projection_matrix: [2328.6857198980888, 0.0, 653.35646250924742, 0.0, 0.0, 2328.6701077899961, 512.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
 
 modules:
   - id: camera
     name: HikCamera
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Info: {constexpr: HikCameraInfo}
     constructor_args:
       runtime:
         camera_name: gimbal
@@ -44,11 +56,11 @@ modules:
   - id: camera_frame_sync
     name: CameraFrameSync
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Info: {constexpr: HikCameraInfo}
     constructor_args:
       camera: '@camera'
       runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::RAW_PROBE"}
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::SyncMode::RAW_PROBE"}
         offset_us: 0
         host_topic_domain_name: host
         sync_command_topic_name: camera_sync_command
@@ -80,7 +92,7 @@ modules:
   - id: armor_detector
     name: ArmorDetector
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Info: {constexpr: HikCameraInfo}
     constructor_args:
       cfg:
         detect_color: 2
@@ -120,7 +132,7 @@ modules:
   - id: armor_tracker
     name: ArmorTracker
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Info: {constexpr: HikCameraInfo}
     constructor_args:
       cfg:
         limits:

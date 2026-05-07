@@ -5,10 +5,10 @@
 
 ## Files
 
-- `hik.yaml`：实机 Hik 相机配置。
+- `hik.yaml`：实机 Hik 相机配置，使用居中 `1280x1024` ROI。
 - `hik_record.yaml`：实机 Hik 相机录制专用配置，只实例化相机、同步和
-  SharedTopic 收发，不实例化检测和跟踪模块。
-- `capturefile.yaml`：离线文件配置。
+  SharedTopic 收发，不实例化检测和跟踪模块，采集几何同样为 `1280x1024` ROI。
+- `capturefile.yaml`：离线文件配置，保持录像原始 `1440x1080` 几何。
 
 ## Recording
 
