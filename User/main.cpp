@@ -65,6 +65,28 @@ static_assert(sizeof(RobotGameRefereeGame) == 11);
 static_assert(sizeof(RobotGameRefereeLauncher) == 7);
 static_assert(sizeof(RobotGameRefereeSummary) == 31);
 
+namespace
+{
+const char *FileLogLevelName(LibXR::LogLevel level)
+{
+  switch (level)
+  {
+    case LibXR::LogLevel::XR_LOG_LEVEL_ERROR:
+      return "E";
+    case LibXR::LogLevel::XR_LOG_LEVEL_WARN:
+      return "W";
+    case LibXR::LogLevel::XR_LOG_LEVEL_PASS:
+      return "P";
+    case LibXR::LogLevel::XR_LOG_LEVEL_INFO:
+      return "I";
+    case LibXR::LogLevel::XR_LOG_LEVEL_DEBUG:
+      return "D";
+    default:
+      return "?";
+  }
+}
+}  // namespace
+
 static int AcquireBspLock()
 {
   constexpr const char *lock_path = "/tmp/xrobot-autoaim-camera.lock";
@@ -84,12 +106,18 @@ static int AcquireBspLock()
   return fd;
 }
 
-void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::RawData &log_data) =
-    [](bool, LibXR::Topic tp, LibXR::RawData &log_data)
+void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::MicrosecondTimestamp,
+                   LibXR::RawData &log_data) =
+    [](bool, LibXR::Topic tp, LibXR::MicrosecondTimestamp timestamp,
+       LibXR::RawData &log_data)
 {
   UNUSED(tp);
 
   auto log = reinterpret_cast<LibXR::LogData *>(log_data.addr_);
+  if (log == nullptr)
+  {
+    return;
+  }
 
   if (LibXR::STDIO::write_ && LibXR::STDIO::write_->Writable())
   {
@@ -113,20 +141,11 @@ void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::RawData &log_data) =
 
     if (f)
     {
-      auto now = clock::now();
-      auto ms =
-          std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) %
-          1000;
-      std::time_t t2 = clock::to_time_t(now);
-      std::tm tm2{};
-      localtime_r(&t2, &tm2);
-      char ts[32];
-      (void)std::strftime(ts, sizeof(ts), "%F %T", &tm2);  // "YYYY-MM-DD HH:MM:SS"
-
-      f << '[' << ts << '.' << std::setw(3) << std::setfill('0') << ms.count()
-        << std::setfill(' ') << "][" << static_cast<unsigned>(log->level) << "] "
-        << (log->file ? log->file : "?") << ':' << log->line << ' ' << log->message
-        << '\n';
+      const uint32_t timestamp_ms =
+          static_cast<uint32_t>(static_cast<uint64_t>(timestamp) / 1000U);
+      f << FileLogLevelName(log->level) << " [" << timestamp_ms << "]("
+        << (log->file ? log->file : "?") << ':' << log->line << ") "
+        << log->message << '\n';
       f.flush();
     }
   }
