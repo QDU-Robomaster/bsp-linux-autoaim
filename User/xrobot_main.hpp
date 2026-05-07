@@ -51,7 +51,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorTracker<AutoAimRunConfig::MainCameraInfo> armor_tracker(
       hw,
       appmgr,
-      {{30.0, 30.0}, {0.15, 1.0}, {5, 0.3}, {20.0, 100.0, 800.0}, {0.26, 0.12, 0.4}, {0.05, 0.02}, {{0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, {0.136068364765315, -0.04186176466382783, 0.008995665883635868}}, {true, 0.25, true, false, false, true, false}, {false, "armor_tracker_preview", 0.5, 1, 1}},
+      {{30.0, 30.0}, {0.15, 1.0}, {5, 0.3}, {20.0, 100.0, 800.0}, {0.26, 0.12, 0.4}, {0.05, 0.02}, {{0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461}, {0.136068364765315, -0.04186176466382783, 0.008995665883635868}}, {true, 0.25, true, false, false, true, false}, {false, "armor_tracker_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_tracker", 30.0}},
       camera_frame_sync
   );
 
