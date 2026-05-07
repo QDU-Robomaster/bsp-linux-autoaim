@@ -1,11 +1,11 @@
 modules:
 - qdu-future/CameraBase
-- qdu-future/HikCamera@codex/hik-decimation-config-20260507
+- qdu-future/HikCamera
 - qdu-future/CaptureFileCamera
 - qdu-future/CameraSync
 - qdu-future/CameraFrameSync
 - xrobot-org/SharedTopic
 - xrobot-org/SharedTopicClient
 - qdu-future/VisionPreview
-- qdu-future/ArmorDetector@codex/detector-512x384-model-20260507
+- qdu-future/ArmorDetector
 - qdu-future/ArmorTracker
