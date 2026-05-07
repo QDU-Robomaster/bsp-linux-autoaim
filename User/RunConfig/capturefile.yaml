@@ -91,6 +91,8 @@ modules:
           web_port: 8080
           # Web stream 名；直接取流路径 /stream/armor_detector。
           web_stream_name: armor_detector
+          # 预览最大接受帧率；<= 0 表示不限频。
+          max_fps: 30.0
       sync: '@camera_frame_sync'
 
   - id: armor_tracker
