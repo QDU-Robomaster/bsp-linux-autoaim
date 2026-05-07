@@ -163,7 +163,8 @@ int main(int, char **)
 
   if constexpr (AutoAimRunConfig::EnableDevCUsb)
   {
-    static LibXR::LinuxUART devc_usb("16d0", "1492", 115200);
+    static LibXR::LinuxUART devc_usb("16d0", "1492", 115200,
+                                     LibXR::UART::Parity::NO_PARITY, 8, 1, 80, 8192);
     peripherals.Register(LibXR::Entry<LibXR::UART>({devc_usb, {"DevC-USB"}}));
 
     static LibXR::Topic::Domain host_domain("host");

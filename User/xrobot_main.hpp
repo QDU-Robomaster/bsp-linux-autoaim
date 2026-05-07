@@ -32,14 +32,14 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       hw,
       appmgr,
       "DevC-USB",
-      256,
+      4096,
       {{"gimbal_gyro", "host"}, {"gimbal_accl", "host"}, {"gimbal_quat", "host"}, {"camera_sync_result", "host"}, {"robot_game_ref", "host"}}
   );
   static SharedTopicClient shared_topic_tx(
       hw,
       appmgr,
       "DevC-USB",
-      16,
+      256,
       {{"camera_sync_command", "host"}}
   );
   static ArmorDetector<AutoAimRunConfig::MainCameraInfo> armor_detector(

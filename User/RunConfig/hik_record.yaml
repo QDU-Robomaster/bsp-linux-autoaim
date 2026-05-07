@@ -68,7 +68,7 @@ modules:
     name: SharedTopic
     constructor_args:
       uart_name: "DevC-USB"
-      buffer_size: 256
+      buffer_size: 4096
       topic_configs:
         - [gimbal_gyro, host]
         - [gimbal_accl, host]
@@ -80,6 +80,6 @@ modules:
     name: SharedTopicClient
     constructor_args:
       uart_name: "DevC-USB"
-      slot_count: 16
+      slot_count: 256
       topic_configs:
         - [camera_sync_command, host]
