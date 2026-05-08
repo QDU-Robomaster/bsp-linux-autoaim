@@ -103,8 +103,6 @@ modules:
           min_confidence: 0.1
           enable_quad_check: true
           min_quad_area_px: 16.0
-          input_width: 512
-          input_height: 384
           openvino_device: AUTO_DETECT
           openvino_performance_mode: LATENCY
         referee_auto_detect_color: true
@@ -115,7 +113,7 @@ modules:
           enabled: false
           # OpenCV 窗口名，只影响本模块预览窗口标题。
           preview_window_name: armor_detector_preview
-          # 显示缩放比例，只影响窗口画面，不改变 detector 输入图像。
+          # 显示缩放比例，只影响本模块预览画面。
           preview_scale: 0.5
           # cv::waitKey 事件轮询时间，单位 ms。
           preview_wait_key_ms: 1
