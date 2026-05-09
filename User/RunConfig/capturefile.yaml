@@ -93,6 +93,17 @@ modules:
           web_stream_name: armor_detector
           # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
+        depth_correction:
+          enabled: false
+          camera_normalized_features: true
+          coeffs: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+          max_abs_correction_m: 0.15
+          min_quad_height_px: 1.0
+        number_refine:
+          enabled: true
+          detector_min_confidence: 0.5
+          classifier_min_confidence: 0.9
+          enforce_type_compatibility: true
       sync: '@camera_frame_sync'
 
   - id: armor_tracker
