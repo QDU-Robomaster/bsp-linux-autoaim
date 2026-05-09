@@ -68,6 +68,8 @@ modules:
           output_dir: ""
           overwrite: false
           flush_every_frames: 30
+          codec: png
+          png_compression: 1
 
   - id: camera_frame_sync
     name: CameraFrameSync

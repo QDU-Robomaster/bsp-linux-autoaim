@@ -12,7 +12,7 @@
 
 ## Recording
 
-`hik_record.yaml` 写出的 JPEG 内录包使用同一个 stem：
+`hik_record.yaml` 写出的 PNG 无损内录包使用同一个 stem：
 
 ```text
 runs/camera_record/<时间>_<相机名>/
@@ -23,7 +23,8 @@ runs/camera_record/<时间>_<相机名>/
   <stem>_imu.csv
 ```
 
-运行中先写到同级 `.tmp` 目录，并保留 `.recording` 恢复标记；如果比赛中直接拔电池，
+图像帧默认使用 `codec: png`、`png_compression: 1`，优先保证写盘速度且不引入 JPEG
+损失。运行中先写到同级 `.tmp` 目录，并保留 `.recording` 恢复标记；如果比赛中直接拔电池，
 下次启动会先整理上次未完成的包。回放时把 `CaptureFileCamera.runtime.file_path`
 指到 `*_frames.bin`，`frame_csv_path` 指到 `*_frames.csv`，`imu_csv_path` 指到
 `*_imu.csv`。
