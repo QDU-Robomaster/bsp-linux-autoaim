@@ -10,6 +10,15 @@ constexprs:
   EnableDevCUsb:
     type: bool
     value: true
+  HikExposureTimeUs:
+    type: float
+    value: {expr: 2000.0F}
+  HikTriggerDelayUs:
+    type: int
+    value: 75
+  HikSyncOffsetUs:
+    type: int
+    value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
   MainCameraInfo:
     type: CameraTypes::CameraInfo
     value:
@@ -46,7 +55,7 @@ modules:
         image_topic_name: camera_image
         imu_topic_name: camera_imu
         gain: {expr: 16.0F}
-        exposure_time: {expr: 2000.0F}
+        exposure_time: {constexpr: HikExposureTimeUs}
         external_trigger: true
         acquisition_frame_rate: {expr: 249.0F}
         grab_timeout_ms: 100
@@ -63,7 +72,7 @@ modules:
       camera: '@camera'
       runtime:
         mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::SyncMode::RAW_PROBE"}
-        offset_us: 0
+        offset_us: {constexpr: HikSyncOffsetUs}
         host_topic_domain_name: host
         sync_command_topic_name: camera_sync_command
         sync_result_topic_name: camera_sync_result
