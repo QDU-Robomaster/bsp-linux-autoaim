@@ -112,7 +112,6 @@ modules:
     constructor_args:
       cfg:
         tracker:
-          enemy_color_id: -1
           require_target_tag: false
           target_tag_id: -1
           min_detect_count: 2
