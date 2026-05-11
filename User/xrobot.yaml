@@ -156,37 +156,19 @@ modules:
       Info: {constexpr: HikCameraInfo}
     constructor_args:
       cfg:
-        limits:
-          max_armor_distance: 30.0
-          max_z_position: 30.0
-        match:
-          max_match_distance: 0.15
-          max_match_yaw_diff: 1.0
-        thresholds:
-          tracking_thres: 5
-          lost_time_thres: 0.3
-        ekf:
-          sigma2_q_xyz: 20.0
-          sigma2_q_yaw: 100.0
-          sigma2_q_r: 800.0
-        geometry:
-          initial_radius: 0.26
-          min_radius: 0.12
-          max_radius: 0.4
-        noise:
-          r_xyz_factor: 0.05
-          r_yaw: 0.02
-        frames:
-          rotation: [0.49032232209180826, -0.5047863708428628, 0.5048907866866026, -0.4998600141927461]
-          translation: [0.136068364765315, -0.041861764663827829, 0.0089956658836358675]
-        model:
-          enable_pair_dz: true
-          measurement_recenter_alpha: 0.25
-          quality_recenter: true
-          enable_pair_geometry: false
-          enable_output_meas_anchor: false
-          enable_aimer_meas_anchor: true
-          enable_fixed_pose_yaw_opt: false
+        tracker:
+          enemy_color_id: -1
+          require_target_tag: false
+          target_tag_id: -1
+          min_detect_count: 2
+          max_temp_lost_count: 15
+          outpost_max_temp_lost_count: 75
+          output_frame: 1
+        overlay:
+          armor_pitch_deg: 15.0
+          small_armor_width_m: 0.135
+          big_armor_width_m: 0.225
+          armor_height_m: 0.056
         preview:
           # tracker 实时预览总开关；false 时不启动预览线程，实机默认关闭。
           enabled: false
