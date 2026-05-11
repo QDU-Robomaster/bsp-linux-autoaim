@@ -29,7 +29,33 @@ jobs:
         apt-get update
         apt-get install -y --no-install-recommends libgpiod-dev
     - name: get modules && setup
-      run: xrobot_setup
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 - <<'PY' > /tmp/xrobot_module_clone_list.tsv
+        import yaml
+
+        with open("Modules/modules.yaml", "r", encoding="utf-8") as f:
+            modules = yaml.safe_load(f)["modules"]
+
+        for entry in modules:
+            namespace, rest = entry.split("/", 1)
+            if "@" in rest:
+                module, ref = rest.split("@", 1)
+            else:
+                module, ref = rest, "master"
+            if namespace in {"qdu-future", "qdu-robomaster"}:
+                org = "QDU-Robomaster"
+            elif namespace == "xrobot-org":
+                org = "xrobot-org"
+            else:
+                raise SystemExit(f"unknown module namespace: {namespace}")
+            print(f"{module}\thttps://github.com/{org}/{module}.git\t{ref}")
+        PY
+        while IFS=$'\t' read -r module url ref; do
+          rm -rf "Modules/${module}"
+          git clone --depth=1 --recurse-submodules --branch "${ref}" "${url}" "Modules/${module}"
+        done </tmp/xrobot_module_clone_list.tsv
     - name: detect OpenVINO
       shell: bash
       run: |

@@ -108,7 +108,6 @@ modules:
       cfg:
         detect_color: 2
         network:
-          score_threshold: 0.1
           min_confidence: 0.1
           enable_quad_check: true
           min_quad_area_px: 16.0
