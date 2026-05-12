@@ -100,7 +100,7 @@ modules:
           min_quad_height_px: 1.0
         number_refine:
           enabled: true
-          detector_min_confidence: 0.5
+          detector_min_confidence: 0.2
           classifier_min_confidence: 0.9
           enforce_type_compatibility: true
       sync: '@camera_frame_sync'
