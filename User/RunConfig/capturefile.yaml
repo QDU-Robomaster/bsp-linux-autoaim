@@ -147,6 +147,8 @@ modules:
       sync: '@camera_frame_sync'
   - id: aimer
     name: Aimer
+    template_args:
+      Info: {constexpr: MainCameraInfo}
     constructor_args:
       cfg:
         yaw_offset: -1.0
@@ -179,3 +181,17 @@ modules:
         q_pitch_vel: 1.0
         r_pitch_acc: 1.0
         mpc_max_iter: 10
+        preview:
+          enabled: false
+          preview_window_name: aimer_preview
+          preview_scale: 0.5
+          preview_wait_key_ms: 1
+          queue_capacity: 1
+          output_mode: window
+          web_bind_address: 0.0.0.0
+          web_port: 8080
+          web_stream_name: aimer_preview
+          max_fps: 30.0
+        preview_armor_pitch_deg: 15.0
+        preview_sync_wait_ms: 20
+      sync: '@camera_frame_sync'
