@@ -39,7 +39,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       appmgr,
       "DevC-USB",
       256,
-      {{"camera_sync_command", "host"}}
+      {{"target_euler", "host"}, {"fire_notify", "host"}, {"camera_sync_command", "host"}}
   );
   static ArmorDetector<AutoAimRunConfig::HikCameraInfo> armor_detector(
       hw,

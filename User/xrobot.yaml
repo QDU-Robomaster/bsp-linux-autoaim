@@ -98,6 +98,8 @@ modules:
       uart_name: "DevC-USB"
       slot_count: 256
       topic_configs:
+        - [target_euler, host]
+        - [fire_notify, host]
         - [camera_sync_command, host]
 
   - id: armor_detector
