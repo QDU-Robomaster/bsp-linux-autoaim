@@ -213,7 +213,6 @@ modules:
           web_port: 8080
           web_stream_name: aimer_preview
           max_fps: 30.0
-      sync: '@camera_frame_sync'
 
   - id: shared_topic_tx
     name: SharedTopicClient
