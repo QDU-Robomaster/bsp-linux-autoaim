@@ -92,12 +92,6 @@ modules:
           web_stream_name: armor_detector
           # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
-        depth_correction:
-          enabled: false
-          camera_normalized_features: true
-          coeffs: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-          max_abs_correction_m: 0.15
-          min_quad_height_px: 1.0
         number_refine:
           enabled: true
           detector_min_confidence: 0.2
@@ -118,11 +112,6 @@ modules:
           max_temp_lost_count: 15
           outpost_max_temp_lost_count: 75
           output_frame: 1
-        overlay:
-          armor_pitch_deg: 15.0
-          small_armor_width_m: 0.135
-          big_armor_width_m: 0.225
-          armor_height_m: 0.056
         preview:
           # tracker 实时预览总开关；false 时不启动预览线程，CI/回放默认关闭。
           enabled: false
@@ -164,12 +153,8 @@ modules:
         fire_delay_s: 0.0
         low_speed_extra_predict_s: 0.015
         high_speed_extra_predict_s: 0.03
-        armor_width_m: 0.135
-        armor_height_m: 0.055
-        bullet_spread_m: 0.015
         min_fire_threshold: 0.003
         max_fire_threshold: 0.05
-        enable_pitch_fire_gate: false
         enable_mpc_plan: true
         mpc_fire_thresh: 0.05
         max_yaw_acc: 100.0
@@ -180,7 +165,6 @@ modules:
         q_pitch_pos: 50.0
         q_pitch_vel: 1.0
         r_pitch_acc: 1.0
-        mpc_max_iter: 10
         preview:
           enabled: false
           preview_window_name: aimer_preview
@@ -192,6 +176,4 @@ modules:
           web_port: 8080
           web_stream_name: aimer_preview
           max_fps: 30.0
-        preview_armor_pitch_deg: 15.0
-        preview_sync_wait_ms: 20
       sync: '@camera_frame_sync'

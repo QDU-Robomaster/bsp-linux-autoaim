@@ -44,19 +44,19 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorDetector<AutoAimRunConfig::HikCameraInfo> armor_detector(
       hw,
       appmgr,
-      {2, {0.1, true, 16.0, "AUTO_DETECT", "LATENCY"}, true, "host", "robot_game_ref", {false, "armor_detector_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_detector", 30.0}, {false, true, {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}, 0.15, 1.0}, {true, 0.2, 0.9, true}},
+      {2, {0.1, true, 16.0, "AUTO_DETECT", "LATENCY"}, true, "host", "robot_game_ref", {false, "armor_detector_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_detector", 30.0}, {true, 0.2, 0.9, true}},
       camera_frame_sync
   );
   static ArmorTracker<AutoAimRunConfig::HikCameraInfo> armor_tracker(
       hw,
       appmgr,
-      {{false, -1, 2, 15, 75, 1}, {15.0, 0.135, 0.225, 0.056}, {false, "armor_tracker_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_tracker", 30.0}},
+      {{false, -1, 2, 15, 75, 1}, {false, "armor_tracker_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_tracker", 30.0}},
       camera_frame_sync
   );
   static Aimer<AutoAimRunConfig::HikCameraInfo> aimer(
       hw,
       appmgr,
-      {-1.0, -1.4, 2.0, 23.0, 14.0, true, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015, 0.03, 0.135, 0.055, 0.015, 0.003, 0.05, false, true, 0.05, 100.0, 50.0, 1.0, 1.0, 100.0, 50.0, 1.0, 1.0, 10, {false, "aimer_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "aimer_preview", 30.0}, 15.0, 20},
+      {-1.0, -1.4, 2.0, 23.0, 14.0, true, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015, 0.03, 0.003, 0.05, true, 0.05, 100.0, 50.0, 1.0, 1.0, 100.0, 50.0, 1.0, 1.0, {false, "aimer_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "aimer_preview", 30.0}},
       camera_frame_sync
   );
 
