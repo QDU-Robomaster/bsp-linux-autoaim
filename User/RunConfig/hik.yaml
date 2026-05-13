@@ -92,16 +92,6 @@ modules:
         - [camera_sync_result, host]
         - [robot_game_ref, host]
 
-  - id: shared_topic_tx
-    name: SharedTopicClient
-    constructor_args:
-      uart_name: "DevC-USB"
-      slot_count: 256
-      topic_configs:
-        - [target_euler, host]
-        - [fire_notify, host]
-        - [camera_sync_command, host]
-
   - id: armor_detector
     name: ArmorDetector
     template_args:
@@ -224,3 +214,13 @@ modules:
           web_stream_name: aimer_preview
           max_fps: 30.0
       sync: '@camera_frame_sync'
+
+  - id: shared_topic_tx
+    name: SharedTopicClient
+    constructor_args:
+      uart_name: "DevC-USB"
+      slot_count: 256
+      topic_configs:
+        - [target_euler, host]
+        - [fire_notify, host]
+        - [camera_sync_command, host]

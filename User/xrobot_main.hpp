@@ -34,13 +34,6 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       4096,
       {{"gimbal_gyro", "host"}, {"gimbal_accl", "host"}, {"gimbal_quat", "host"}, {"camera_sync_result", "host"}, {"robot_game_ref", "host"}}
   );
-  static SharedTopicClient shared_topic_tx(
-      hw,
-      appmgr,
-      "DevC-USB",
-      256,
-      {{"target_euler", "host"}, {"fire_notify", "host"}, {"camera_sync_command", "host"}}
-  );
   static ArmorDetector<AutoAimRunConfig::HikCameraInfo> armor_detector(
       hw,
       appmgr,
@@ -58,6 +51,13 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       appmgr,
       {-1.0, -1.4, 2.0, 23.0, 14.0, true, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015, 0.03, 0.003, 0.05, true, 0.05, 100.0, 50.0, 1.0, 1.0, 100.0, 50.0, 1.0, 1.0, {false, "aimer_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "aimer_preview", 30.0}},
       camera_frame_sync
+  );
+  static SharedTopicClient shared_topic_tx(
+      hw,
+      appmgr,
+      "DevC-USB",
+      256,
+      {{"target_euler", "host"}, {"fire_notify", "host"}, {"camera_sync_command", "host"}}
   );
 
   while (true) {
