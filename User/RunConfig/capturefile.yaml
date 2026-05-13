@@ -145,3 +145,37 @@ modules:
           # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
       sync: '@camera_frame_sync'
+  - id: aimer
+    name: Aimer
+    constructor_args:
+      cfg:
+        yaw_offset: -1.0
+        pitch_offset: -1.4
+        yaw_rate_threshold: 2.0
+        default_bullet_speed: 23.0
+        min_valid_bullet_speed: 14.0
+        auto_fire: true
+        image_to_now_s: 0.0
+        vision_to_command_delay_s: 0.0
+        command_transport_delay_s: 0.0
+        gimbal_response_delay_s: 0.0
+        fire_delay_s: 0.0
+        low_speed_extra_predict_s: 0.015
+        high_speed_extra_predict_s: 0.03
+        armor_width_m: 0.135
+        armor_height_m: 0.055
+        bullet_spread_m: 0.015
+        min_fire_threshold: 0.003
+        max_fire_threshold: 0.05
+        enable_pitch_fire_gate: false
+        enable_mpc_plan: true
+        mpc_fire_thresh: 0.05
+        max_yaw_acc: 100.0
+        q_yaw_pos: 50.0
+        q_yaw_vel: 1.0
+        r_yaw_acc: 1.0
+        max_pitch_acc: 100.0
+        q_pitch_pos: 50.0
+        q_pitch_vel: 1.0
+        r_pitch_acc: 1.0
+        mpc_max_iter: 10
