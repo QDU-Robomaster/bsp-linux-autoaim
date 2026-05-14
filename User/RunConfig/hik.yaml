@@ -64,28 +64,6 @@ modules:
         decimation_vertical: 2
         rotate_180: false
 
-  - id: shared_topic_rx
-    name: SharedTopic
-    constructor_args:
-      uart_name: "DevC-USB"
-      buffer_size: 4096
-      topic_configs:
-        - [gimbal_gyro, host]
-        - [gimbal_accl, host]
-        - [gimbal_quat, host]
-        - [camera_sync_result, host]
-        - [robot_game_ref, host]
-
-  - id: shared_topic_tx
-    name: SharedTopicClient
-    constructor_args:
-      uart_name: "DevC-USB"
-      slot_count: 256
-      topic_configs:
-        - [target_euler, host]
-        - [fire_notify, host]
-        - [camera_sync_command, host]
-
   - id: camera_frame_sync
     name: CameraFrameSync
     template_args:
@@ -101,6 +79,18 @@ modules:
         sync_probe_div: 3
         sync_active_level: 1
         target_trigger_hz: {expr: 100.0F}
+
+  - id: shared_topic_rx
+    name: SharedTopic
+    constructor_args:
+      uart_name: "DevC-USB"
+      buffer_size: 4096
+      topic_configs:
+        - [gimbal_gyro, host]
+        - [gimbal_accl, host]
+        - [gimbal_quat, host]
+        - [camera_sync_result, host]
+        - [robot_game_ref, host]
 
   - id: armor_detector
     name: ArmorDetector
@@ -227,3 +217,13 @@ modules:
           web_port: 8080
           web_stream_name: aimer_preview
           max_fps: 30.0
+
+  - id: shared_topic_tx
+    name: SharedTopicClient
+    constructor_args:
+      uart_name: "DevC-USB"
+      slot_count: 256
+      topic_configs:
+        - [target_euler, host]
+        - [fire_notify, host]
+        - [camera_sync_command, host]
