@@ -3,9 +3,9 @@
 
 // Module headers
 #include "HikCamera.hpp"
-#include "CameraFrameSync.hpp"
 #include "SharedTopic.hpp"
 #include "SharedTopicClient.hpp"
+#include "CameraFrameSync.hpp"
 #include "ArmorDetector.hpp"
 #include "ArmorTracker.hpp"
 #include "Aimer.hpp"
@@ -50,7 +50,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorTracker<AutoAimRunConfig::HikCameraInfo> armor_tracker(
       hw,
       appmgr,
-      {{false, -1, 2, 15, 75, 1}, {false, "armor_tracker_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_tracker", 30.0}},
+      {{false, -1, 2, 15, 75, 1}, {{{0.700164645, -0.713949565, 7.38331512e-05, -0.00674416676}, {0.04186176466382783, 0.136068364765315, 0.008995665883635868}}}, {false, "armor_tracker_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_tracker", 30.0}},
       camera_frame_sync
   );
   static Aimer<AutoAimRunConfig::HikCameraInfo> aimer(
