@@ -3,12 +3,12 @@
 
 // Module headers
 #include "HikCamera.hpp"
-#include "SharedTopic.hpp"
-#include "SharedTopicClient.hpp"
 #include "CameraFrameSync.hpp"
+#include "SharedTopic.hpp"
 #include "ArmorDetector.hpp"
 #include "ArmorTracker.hpp"
 #include "Aimer.hpp"
+#include "SharedTopicClient.hpp"
 #include "xrobot_constexpr.hpp"
 
 static void XRobotMain(LibXR::HardwareContainer &hw) {
@@ -49,7 +49,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static Aimer<AutoAimRunConfig::HikCameraInfo> aimer(
       hw,
       appmgr,
-      {-1.0, -1.4, 2.0, 23.0, 14.0, true, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015, 0.03, 0.003, 0.05, true, 0.05, 100.0, 50.0, 1.0, 1.0, 100.0, 50.0, 1.0, 1.0, {false, "aimer_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "aimer_preview", 30.0}}
+      {-1.0, -1.4, 2.0, 23.0, 14.0, true, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015, 0.03, 0.003, 0.05, true, 0.05, 50.0, 9000000.0, 0.0, 1.0, 100.0, 9000000.0, 0.0, 1.0, {false, "aimer_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "aimer_preview", 30.0}}
   );
   static SharedTopicClient shared_topic_tx(
       hw,

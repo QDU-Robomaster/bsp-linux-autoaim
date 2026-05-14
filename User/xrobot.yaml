@@ -198,13 +198,13 @@ modules:
         max_fire_threshold: 0.05
         enable_mpc_plan: true
         mpc_fire_thresh: 0.05
-        max_yaw_acc: 100.0
-        q_yaw_pos: 50.0
-        q_yaw_vel: 1.0
+        max_yaw_acc: 50.0
+        q_yaw_pos: 9000000.0
+        q_yaw_vel: 0.0
         r_yaw_acc: 1.0
         max_pitch_acc: 100.0
-        q_pitch_pos: 50.0
-        q_pitch_vel: 1.0
+        q_pitch_pos: 9000000.0
+        q_pitch_vel: 0.0
         r_pitch_acc: 1.0
         preview:
           enabled: false
