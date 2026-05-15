@@ -149,8 +149,8 @@ modules:
           max_temp_lost_count: 15
           outpost_max_temp_lost_count: 75
         extrinsic:
-          camera_to_body:
-            rotation: [0.700164645, -0.713949565, 0.0000738331512, -0.00674416676]
+          camera_mount_to_body:
+            rotation: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]
             translation: [0.041861764663827829, 0.136068364765315, 0.0089956658836358675]
         preview:
           # tracker 实时预览总开关；false 时不启动预览线程，实机默认关闭。
