@@ -120,6 +120,12 @@ modules:
           type: aruco
           dictionary: DICT_5X5_100
           marker_length_m: 0.04
+        camera_calibration:
+          enabled: true
+          marker_size_mm: 25.0
+          cols: 8
+          rows: 6
+          auto_save_views: 120
         filter:
           require_synced_imu: true
           max_image_imu_dt_us: 2000
