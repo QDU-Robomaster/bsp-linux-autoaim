@@ -33,10 +33,10 @@ Modules/
   相机系到公开本体系 `B` 的变换。
 - `User/RunConfig/hik_record.yaml`：实机录制专用入口，只实例化相机、同步和
   SharedTopic 收发，不实例化检测和跟踪模块，采集几何同样为 `720x540`。
-  它开启 CameraBase PNG 无损图像内录和 CameraFrameSync 同步 IMU 记录。
-  图像帧使用 `codec: png`、`png_compression: 1`。运行中写到同级 `.tmp`
-  目录，并先写 `.recording` 恢复标记；断电后下次启动自动整理为
-  `runs/camera_record/<时间>_<相机名>/`。
+  它只开启 CameraFrameSync 同步 IMU 记录，不再使用 CameraBase 侧图像内录。
+- `User/RunConfig/vision_capture.yaml`：实机同步采集和标定数据入口，实例化相机、
+  同步、SharedTopic 收发和 VisionCapture，不实例化检测、跟踪和 Aimer。同步图像、
+  IMU、相机内参和 ArUco 检测预览写到 `runs/vision_capture/hik_capture/`。
 - `User/RunConfig/capturefile.yaml`：使用内录文件验证视觉链路，不依赖 Hik 相机和 C 板，
   保持录像原始 `1440x1080` 几何。
 
@@ -53,6 +53,7 @@ python3 -m xrobot.GenerateMain --output User/xrobot_main.hpp
 ```bash
 python3 -m xrobot.GenerateMain --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
 python3 -m xrobot.GenerateMain --config User/RunConfig/hik_record.yaml --output User/xrobot_main.hpp
+python3 -m xrobot.GenerateMain --config User/RunConfig/vision_capture.yaml --output User/xrobot_main.hpp
 python3 -m xrobot.GenerateMain --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
 ```
 

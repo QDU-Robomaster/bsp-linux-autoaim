@@ -19,18 +19,6 @@ constexprs:
   HikSyncOffsetUs:
     type: int
     value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
-  MainCameraInfo:
-    type: CameraTypes::CameraInfo
-    value:
-      width: 1440
-      height: 1080
-      step: 4320
-      encoding: {expr: CameraTypes::Encoding::BGR8}
-      camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
-      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
-      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
-      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-      projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
   HikCameraInfo:
     type: CameraTypes::CameraInfo
     value:
@@ -79,8 +67,6 @@ modules:
         sync_probe_div: 3
         sync_active_level: 1
         target_trigger_hz: {expr: 100.0F}
-        record_enable: true
-        record_dir: ""
 
   - id: shared_topic_rx
     name: SharedTopic
@@ -92,7 +78,6 @@ modules:
         - [gimbal_accl, host]
         - [gimbal_quat, host]
         - [camera_sync_result, host]
-        - [robot_game_ref, host]
 
   - id: shared_topic_tx
     name: SharedTopicClient
@@ -101,3 +86,41 @@ modules:
       slot_count: 256
       topic_configs:
         - [camera_sync_command, host]
+
+  - id: vision_capture
+    name: VisionCapture
+    template_args:
+      Info: {constexpr: HikCameraInfo}
+    constructor_args:
+      cfg:
+        mode: record
+        output_dir: runs/vision_capture
+        session_name: hik_capture
+        record:
+          enabled: true
+          image_format: bmp
+          max_fps: 30.0
+          max_frames: 0
+          save_images: true
+          save_metadata: true
+          save_raw_imu: true
+          flush_every_n: 1
+        preview:
+          enabled: true
+          preview_window_name: vision_capture
+          preview_scale: 0.5
+          preview_wait_key_ms: 1
+          queue_capacity: 1
+          output_mode: web
+          web_bind_address: 0.0.0.0
+          web_port: 8080
+          web_stream_name: vision_capture
+          max_fps: 30.0
+        board:
+          type: aruco
+          dictionary: DICT_5X5_100
+          marker_length_m: 0.04
+        filter:
+          require_synced_imu: true
+          max_image_imu_dt_us: 2000
+      sync: '@camera_frame_sync'
