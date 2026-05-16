@@ -31,9 +31,6 @@ Modules/
   Hik 使用 `2x2` 下采样输出 `720x540`，触发目标为 `100Hz`。
   手眼外参写在 `ArmorTracker.cfg.extrinsic.camera_to_body`，表示从 OpenCV
   相机系到公开本体系 `B` 的变换。
-- `User/RunConfig/hik_record.yaml`：实机录制专用入口，只实例化相机、同步和
-  SharedTopic 收发，不实例化检测和跟踪模块，采集几何同样为 `720x540`。
-  它只开启 CameraFrameSync 同步 IMU 记录，不再使用 CameraBase 侧图像内录。
 - `User/RunConfig/vision_capture.yaml`：实机同步采集和标定数据入口，实例化相机、
   同步、SharedTopic 收发和 VisionCapture，不实例化检测、跟踪和 Aimer。同步图像、
   IMU、相机内参和 ArUco 检测预览写到 `runs/vision_capture/hik_capture/`。
@@ -52,7 +49,6 @@ python3 -m xrobot.GenerateMain --output User/xrobot_main.hpp
 
 ```bash
 python3 -m xrobot.GenerateMain --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
-python3 -m xrobot.GenerateMain --config User/RunConfig/hik_record.yaml --output User/xrobot_main.hpp
 python3 -m xrobot.GenerateMain --config User/RunConfig/vision_capture.yaml --output User/xrobot_main.hpp
 python3 -m xrobot.GenerateMain --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
 ```
