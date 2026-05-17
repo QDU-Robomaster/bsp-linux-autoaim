@@ -1,6 +1,6 @@
 modules:
 - qdu-future/CameraBase
-- qdu-future/HikCamera
+- qdu-future/HikCamera@codex/hik-gamma-config-20260517
 - qdu-future/CaptureFileCamera
 - qdu-future/CameraSync
 - qdu-future/CameraFrameSync

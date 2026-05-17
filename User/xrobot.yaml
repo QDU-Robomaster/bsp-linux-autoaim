@@ -63,6 +63,8 @@ modules:
         decimation_horizontal: 2
         decimation_vertical: 2
         rotate_180: false
+        gamma_enabled: false
+        gamma: {expr: 1.0F}
 
   - id: camera_frame_sync
     name: CameraFrameSync

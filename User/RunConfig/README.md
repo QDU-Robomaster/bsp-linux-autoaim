@@ -22,6 +22,18 @@ runs/vision_capture/hik_capture/
   images/
 ```
 
+## Hik Gamma
+
+`hik.yaml` 和 `vision_capture.yaml` 默认保留相机 Gamma 节点不变。实机测试硬件
+Gamma 时，把对应相机配置改成：
+
+```yaml
+gamma_enabled: true
+gamma: {expr: 1.0F}
+```
+
+`gamma` 可按 Hik SDK 范围设为 `[0.1, 4.0]`。
+
 ## Generate
 
 ```bash
