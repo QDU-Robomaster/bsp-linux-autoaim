@@ -111,6 +111,35 @@ modules:
           min_detect_count: 2
           max_temp_lost_count: 15
           outpost_max_temp_lost_count: 75
+          target_select:
+            # 多车选择中，近期可见装甲数量的权重。
+            observed_count_weight: 1.6
+            # 多车选择中，目标距离越近得分越高；实车默认提高该项权重。
+            distance_weight: 2.0
+            # 多车选择中，图像装甲面积越大得分越高。
+            area_weight: 1.2
+            # 多车选择中，自旋越快得分越低。
+            spin_weight: 0.8
+            # 多车选择中，目标越接近当前视轴得分越高；实车默认提高该项权重。
+            angle_weight: 2.0
+            # 距离评分满分对应的最大距离，单位 m。
+            max_distance_m: 8.0
+            # 距离评分从满分降到 0 的距离跨度，单位 m。
+            distance_span_m: 7.5
+            # 面积评分归一化像素面积。
+            area_norm_px: 6000.0
+            # 观测数量评分归一化数量。
+            observed_count_norm: 4.0
+            # 自旋评分归一化角速度，单位 rad/s。
+            max_spin_rad_s: 8.0
+            # 视轴角差评分归一化距离，使用归一化图像坐标。
+            max_angle_norm: 0.5
+            # detecting 状态的目标选择分数倍率。
+            detecting_scale: 0.55
+            # temp_lost 状态的目标选择分数倍率。
+            temp_lost_scale: 0.35
+            # 当前目标切换到更高分目标所需的最小分差。
+            switch_margin: 0.25
         extrinsic:
           camera_mount_to_body:
             rotation: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]

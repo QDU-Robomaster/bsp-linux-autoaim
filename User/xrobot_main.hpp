@@ -43,7 +43,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static ArmorTracker<AutoAimRunConfig::HikCameraInfo> armor_tracker(
       hw,
       appmgr,
-      {{false, -1, 2, 15, 75}, {{{0.999929746909, -0.009747410407, -0.004716638126, -0.00482105397}, {0.04186176466382783, 0.136068364765315, 0.008995665883635868}}}, {false, "armor_tracker_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_tracker", 30.0}},
+      {{false, -1, 2, 15, 75, {1.6, 2.0, 1.2, 0.8, 2.0, 8.0, 7.5, 6000.0, 4.0, 8.0, 0.5, 0.55, 0.35, 0.25}}, {{{0.999929746909, -0.009747410407, -0.004716638126, -0.00482105397}, {0.04186176466382783, 0.136068364765315, 0.008995665883635868}}}, {false, "armor_tracker_preview", 0.5, 1, 1, "window", "0.0.0.0", 8080, "armor_tracker", 30.0}},
       camera_frame_sync
   );
   static Aimer<AutoAimRunConfig::HikCameraInfo> aimer(
