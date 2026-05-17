@@ -94,3 +94,14 @@ jobs:
         -DLIBXR_PRINT_ENABLE_POINTER=ON
     - name: build hik
       run: cmake --build build_hik --target rm_auto_aim
+    - name: generate vision_capture preset
+      run: xrobot_gen_main --config User/RunConfig/vision_capture.yaml --output User/xrobot_main.hpp
+    - name: config cmake vision_capture
+      run: >
+        cmake . -Bbuild_vision_capture -G Ninja
+        -DOpenVINO_DIR="$OPENVINO_DIR"
+        -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
+        -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
+        -DLIBXR_PRINT_ENABLE_POINTER=ON
+    - name: build vision_capture
+      run: cmake --build build_vision_capture --target rm_auto_aim

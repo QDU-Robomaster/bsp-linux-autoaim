@@ -126,6 +126,9 @@ modules:
           cols: 8
           rows: 6
           auto_save_views: 120
+        handeye_calibration:
+          min_samples: 6
+          R_body2imu: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
         filter:
           require_synced_imu: true
           max_image_imu_dt_us: 2000

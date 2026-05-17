@@ -10,4 +10,4 @@ modules:
 - qdu-future/ArmorDetector
 - qdu-future/ArmorTracker
 - qdu-future/Aimer
-- qdu-future/VisionCapture
+- qdu-future/VisionCapture@codex/handeye-solver-20260517
