@@ -1,0 +1,231 @@
+global_settings:
+  monitor_sleep_ms: 1000
+
+constexpr_namespace: AutoAimRunConfig
+
+constexpr_includes:
+  - CameraBase.hpp
+
+constexprs:
+  EnableDevCUsb:
+    type: bool
+    value: true
+  HikExposureTimeUs:
+    type: float
+    value: {expr: 2000.0F}
+  HikTriggerDelayUs:
+    type: int
+    value: 75
+  HikSyncOffsetUs:
+    type: int
+    value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
+  MainCameraInfo:
+    type: CameraTypes::CameraInfo
+    value:
+      width: 1440
+      height: 1080
+      step: 4320
+      encoding: {expr: CameraTypes::Encoding::BGR8}
+      camera_matrix: [2348.0610281828863, 0.0, 753.7199990513768, 0.0, 2341.430205137848, 544.3093638576938, 0.0, 0.0, 1.0]
+      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
+      distortion_coefficients: [-0.09324913488777978, 0.3089185338125273, 0.0011528970103605383, -0.0010514494107999794, 0.0]
+      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+      projection_matrix: [2334.0852301109603, 0.0, 753.2190261545588, 0.0, 0.0, 2331.8191930180155, 544.7774518626655, 0.0, 0.0, 0.0, 1.0, 0.0]
+  HikCameraInfo:
+    type: CameraTypes::CameraInfo
+    value:
+      width: 720
+      height: 540
+      step: 2160
+      encoding: {expr: CameraTypes::Encoding::BGR8}
+      camera_matrix: [1174.0305140914431, 0.0, 376.8599995256884, 0.0, 1170.715102568924, 272.1546819288469, 0.0, 0.0, 1.0]
+      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
+      distortion_coefficients: [-0.09324913488777978, 0.3089185338125273, 0.0011528970103605383, -0.0010514494107999794, 0.0]
+      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+      projection_matrix: [1167.0426150554802, 0.0, 376.6095130772794, 0.0, 0.0, 1165.9095965090078, 272.3887259313328, 0.0, 0.0, 0.0, 1.0, 0.0]
+
+modules:
+  - id: camera
+    name: HikCamera
+    template_args:
+      Info: {constexpr: HikCameraInfo}
+    constructor_args:
+      runtime:
+        camera_name: gimbal
+        image_topic_name: camera_image
+        imu_topic_name: camera_imu
+        gain: {expr: 16.0F}
+        exposure_time: {constexpr: HikExposureTimeUs}
+        external_trigger: false
+        acquisition_frame_rate: {expr: 124.5F}
+        grab_timeout_ms: 100
+        image_node_num: 3
+        decimation_horizontal: 2
+        decimation_vertical: 2
+        rotate_180: false
+
+  - id: camera_frame_sync
+    name: CameraFrameSync
+    template_args:
+      Info: {constexpr: HikCameraInfo}
+    constructor_args:
+      camera: '@camera'
+      runtime:
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::SyncMode::LATEST_IMU"}
+        offset_us: {constexpr: HikSyncOffsetUs}
+        host_topic_domain_name: host
+        sync_command_topic_name: camera_sync_command
+        sync_result_topic_name: camera_sync_result
+        sync_probe_div: 3
+        sync_active_level: 1
+        target_trigger_hz: {expr: 100.0F}
+        raw_imu_frame: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY"}
+        raw_quat_topic_name: ahrs_quaternion
+
+  - id: shared_topic_rx
+    name: SharedTopic
+    constructor_args:
+      uart_name: "DevC-USB"
+      buffer_size: 256
+      topic_configs:
+        - [ahrs_quaternion, host]
+        - [camera_sync_result, host]
+        - [sentry_ref, host]
+
+  - id: armor_detector
+    name: ArmorDetector
+    template_args:
+      Info: {constexpr: HikCameraInfo}
+    constructor_args:
+      cfg:
+        detect_color: 2
+        network:
+          min_confidence: 0.1
+          enable_quad_check: true
+          min_quad_area_px: 16.0
+          openvino_device: AUTO_DETECT
+          openvino_performance_mode: LATENCY
+        referee_auto_detect_color: true
+        referee_domain: host
+        referee_topic: sentry_ref
+        preview:
+          enabled: false
+          preview_window_name: armor_detector_preview
+          preview_scale: 0.5
+          preview_wait_key_ms: 1
+          queue_capacity: 1
+          output_mode: web
+          web_bind_address: 0.0.0.0
+          web_port: 8081
+          web_stream_name: armor_detector
+          max_fps: 30.0
+        number_refine:
+          enabled: true
+          detector_min_confidence: 0.2
+          classifier_min_confidence: 0.9
+          enforce_type_compatibility: true
+      sync: '@camera_frame_sync'
+
+  - id: armor_tracker
+    name: ArmorTracker
+    template_args:
+      Info: {constexpr: HikCameraInfo}
+    constructor_args:
+      cfg:
+        tracker:
+          require_target_tag: false
+          target_tag_id: -1
+          min_detect_count: 2
+          max_temp_lost_count: 15
+          outpost_max_temp_lost_count: 75
+          target_select:
+            observed_count_weight: 1.6
+            distance_weight: 2.0
+            area_weight: 1.2
+            spin_weight: 0.8
+            angle_weight: 2.0
+            max_distance_m: 8.0
+            distance_span_m: 7.5
+            area_norm_px: 6000.0
+            observed_count_norm: 4.0
+            max_spin_rad_s: 8.0
+            max_angle_norm: 0.5
+            detecting_scale: 0.55
+            temp_lost_scale: 0.35
+            switch_margin: 0.25
+        extrinsic:
+          camera_mount_to_body:
+            rotation: [1.0, 0.0, 0.0, 0.0]
+            translation: [0.0, 0.115, 0.05]
+        preview:
+          enabled: false
+          preview_window_name: armor_tracker_preview
+          preview_scale: 0.5
+          preview_wait_key_ms: 1
+          queue_capacity: 1
+          output_mode: web
+          web_bind_address: 0.0.0.0
+          web_port: 8082
+          web_stream_name: armor_tracker
+          max_fps: 30.0
+      sync: '@camera_frame_sync'
+
+  - id: aimer
+    name: Aimer
+    template_args:
+      Info: {constexpr: HikCameraInfo}
+    constructor_args:
+      cfg:
+        yaw_offset: -1.0
+        roll_offset: -0.40107045659157625
+        yaw_rate_threshold: 2.0
+        default_bullet_speed: 21.0
+        min_valid_bullet_speed: 14.0
+        ballistic_drag_k: 0.02
+        ballistic_integration_dt_s: 0.001
+        ballistic_max_iterations: 16
+        ballistic_min_elevation_deg: -20.0
+        ballistic_max_elevation_deg: 35.0
+        auto_fire: true
+        image_to_now_s: 0.0
+        vision_to_command_delay_s: 0.0
+        command_transport_delay_s: 0.0
+        gimbal_response_delay_s: 0.0
+        fire_delay_s: 0.075
+        low_speed_extra_predict_s: 0.075
+        high_speed_extra_predict_s: 0.075
+        min_fire_threshold: 0.003
+        max_fire_threshold: 0.05
+        enable_mpc_plan: true
+        mpc_fire_thresh: 0.05
+        max_yaw_acc: 50.0
+        q_yaw_pos: 9000000.0
+        q_yaw_vel: 0.0
+        r_yaw_acc: 1.0
+        max_roll_acc: 100.0
+        q_roll_pos: 9000000.0
+        q_roll_vel: 0.0
+        r_roll_acc: 1.0
+        preview:
+          enabled: true
+          preview_window_name: aimer_preview
+          preview_scale: 0.5
+          preview_wait_key_ms: 1
+          queue_capacity: 1
+          output_mode: web
+          web_bind_address: 0.0.0.0
+          web_port: 8083
+          web_stream_name: aimer_preview
+          max_fps: 30.0
+        enable_runtime_log: true
+        bullet_speed_log_delta: 0.05
+        heat_log_delta: 1.0
+
+  - id: shared_topic_tx
+    name: SharedTopicClient
+    constructor_args:
+      uart_name: "DevC-USB"
+      slot_count: 16
+      topic_configs:
+        - [target_euler, host]
+        - [fire_notify, host]
