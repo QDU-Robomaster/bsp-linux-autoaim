@@ -45,25 +45,16 @@ struct [[gnu::packed]] RobotGameRefereeGame
   uint64_t sync_time_stamp{};
 };
 
-struct [[gnu::packed]] RobotGameRefereeLauncher
-{
-  uint8_t bullet_type{};
-  uint8_t launcher_id{};
-  uint8_t bullet_freq{};
-  float bullet_speed{};
-};
-
 struct [[gnu::packed]] RobotGameRefereeSummary
 {
   RobotGameRefereeStatus robot_status{};
   RobotGameRefereeGame game_status{};
-  RobotGameRefereeLauncher launcher_data{};
+  uint8_t reserved_tail[68]{};
 };
 
 static_assert(sizeof(RobotGameRefereeStatus) == 13);
 static_assert(sizeof(RobotGameRefereeGame) == 11);
-static_assert(sizeof(RobotGameRefereeLauncher) == 7);
-static_assert(sizeof(RobotGameRefereeSummary) == 31);
+static_assert(sizeof(RobotGameRefereeSummary) == 92);
 
 namespace
 {
