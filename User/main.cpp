@@ -188,7 +188,7 @@ int main(int, char **)
 
     static LibXR::Topic::Domain host_domain("host");
     static LibXR::Topic robot_game_referee_topic(
-        "robot_game_ref", sizeof(RobotGameRefereeSummary), &host_domain, true);
+        "sentry_ref", sizeof(RobotGameRefereeSummary), &host_domain, true);
   }
 
   XRobotMain(peripherals);

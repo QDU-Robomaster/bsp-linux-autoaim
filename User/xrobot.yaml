@@ -56,8 +56,8 @@ modules:
         imu_topic_name: camera_imu
         gain: {expr: 16.0F}
         exposure_time: {constexpr: HikExposureTimeUs}
-        external_trigger: false
-        acquisition_frame_rate: {expr: 124.5F}
+        external_trigger: true
+        acquisition_frame_rate: {expr: 249.0F}
         grab_timeout_ms: 100
         image_node_num: 3
         decimation_horizontal: 2
@@ -71,7 +71,7 @@ modules:
     constructor_args:
       camera: '@camera'
       runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::SyncMode::LATEST_IMU"}
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::SyncMode::RAW_PROBE"}
         offset_us: {constexpr: HikSyncOffsetUs}
         host_topic_domain_name: host
         sync_command_topic_name: camera_sync_command
@@ -79,18 +79,18 @@ modules:
         sync_probe_div: 3
         sync_active_level: 1
         target_trigger_hz: {expr: 100.0F}
-        raw_imu_frame: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY"}
-        raw_quat_topic_name: ahrs_quaternion
 
   - id: shared_topic_rx
     name: SharedTopic
     constructor_args:
       uart_name: "DevC-USB"
-      buffer_size: 256
+      buffer_size: 4096
       topic_configs:
-        - [ahrs_quaternion, host]
+        - [gimbal_gyro, host]
+        - [gimbal_accl, host]
+        - [gimbal_quat, host]
         - [camera_sync_result, host]
-        - [robot_game_ref, host]
+        - [sentry_ref, host]
 
   - id: armor_detector
     name: ArmorDetector
@@ -107,7 +107,7 @@ modules:
           openvino_performance_mode: LATENCY
         referee_auto_detect_color: true
         referee_domain: host
-        referee_topic: robot_game_ref
+        referee_topic: sentry_ref
         preview:
           # detector 实时预览总开关；false 时不启动预览线程，实机默认关闭。
           enabled: false
@@ -120,11 +120,11 @@ modules:
           # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
           queue_capacity: 1
           # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
-          output_mode: web
+          output_mode: window
           # Web 监听地址；0.0.0.0 表示允许局域网访问。
           web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8081/。
-          web_port: 8081
+          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
+          web_port: 8080
           # Web stream 名；直接取流路径 /stream/armor_detector。
           web_stream_name: armor_detector
           # 预览最大接受帧率；<= 0 表示不限频。
@@ -193,11 +193,11 @@ modules:
           # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
           queue_capacity: 1
           # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
-          output_mode: web
+          output_mode: window
           # Web 监听地址；0.0.0.0 表示允许局域网访问。
           web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8082/。
-          web_port: 8082
+          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
+          web_port: 8080
           # Web stream 名；直接取流路径 /stream/armor_tracker。
           web_stream_name: armor_tracker
           # 预览最大接受帧率；<= 0 表示不限频。
@@ -240,14 +240,14 @@ modules:
         q_roll_vel: 0.0
         r_roll_acc: 1.0
         preview:
-          enabled: true
+          enabled: false
           preview_window_name: aimer_preview
           preview_scale: 0.5
           preview_wait_key_ms: 1
           queue_capacity: 1
-          output_mode: web
+          output_mode: window
           web_bind_address: 0.0.0.0
-          web_port: 8083
+          web_port: 8080
           web_stream_name: aimer_preview
           max_fps: 30.0
         enable_runtime_log: true
@@ -258,7 +258,8 @@ modules:
     name: SharedTopicClient
     constructor_args:
       uart_name: "DevC-USB"
-      slot_count: 16
+      slot_count: 256
       topic_configs:
         - [target_euler, host]
         - [fire_notify, host]
+        - [camera_sync_command, host]
