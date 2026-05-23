@@ -212,7 +212,7 @@ modules:
         yaw_offset: -1.0
         roll_offset: -0.40107045659157625
         yaw_rate_threshold: 2.0
-        default_bullet_speed: 23.0
+        default_bullet_speed: 21.0
         min_valid_bullet_speed: 14.0
         ballistic_drag_k: 0.02
         ballistic_integration_dt_s: 0.001
