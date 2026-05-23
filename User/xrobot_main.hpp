@@ -32,12 +32,12 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
       appmgr,
       "DevC-USB",
       256,
-      {{"ahrs_quaternion", "host"}, {"camera_sync_result", "host"}, {"robot_game_ref", "host"}}
+      {{"ahrs_quaternion", "host"}, {"camera_sync_result", "host"}, {"sentry_ref", "host"}}
   );
   static ArmorDetector<AutoAimRunConfig::HikCameraInfo> armor_detector(
       hw,
       appmgr,
-      {2, {0.1, true, 16.0, "AUTO_DETECT", "LATENCY"}, true, "host", "robot_game_ref", {false, "armor_detector_preview", 0.5, 1, 1, "web", "0.0.0.0", 8081, "armor_detector", 30.0}, {true, 0.2, 0.9, true}},
+      {2, {0.1, true, 16.0, "AUTO_DETECT", "LATENCY"}, true, "host", "sentry_ref", {false, "armor_detector_preview", 0.5, 1, 1, "web", "0.0.0.0", 8081, "armor_detector", 30.0}, {true, 0.2, 0.9, true}},
       camera_frame_sync
   );
   static ArmorTracker<AutoAimRunConfig::HikCameraInfo> armor_tracker(

@@ -90,7 +90,7 @@ modules:
       topic_configs:
         - [ahrs_quaternion, host]
         - [camera_sync_result, host]
-        - [robot_game_ref, host]
+        - [sentry_ref, host]
 
   - id: armor_detector
     name: ArmorDetector
@@ -107,7 +107,7 @@ modules:
           openvino_performance_mode: LATENCY
         referee_auto_detect_color: true
         referee_domain: host
-        referee_topic: robot_game_ref
+        referee_topic: sentry_ref
         preview:
           # detector 实时预览总开关；false 时不启动预览线程，实机默认关闭。
           enabled: false
