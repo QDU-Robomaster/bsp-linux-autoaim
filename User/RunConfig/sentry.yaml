@@ -176,8 +176,8 @@ modules:
       Info: {constexpr: HikCameraInfo}
     constructor_args:
       cfg:
-        yaw_offset: -1.0
-        roll_offset: -0.40107045659157625
+        yaw_offset: -0.4
+        roll_offset: -1.6
         yaw_rate_threshold: 2.0
         default_bullet_speed: 21.0
         min_valid_bullet_speed: 14.0
@@ -220,6 +220,7 @@ modules:
         enable_runtime_log: true
         bullet_speed_log_delta: 0.05
         heat_log_delta: 1.0
+        convert_raw_gimbal_quat_to_body: true
 
   - id: shared_topic_tx
     name: SharedTopicClient
