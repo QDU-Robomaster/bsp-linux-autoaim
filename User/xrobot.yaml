@@ -209,10 +209,10 @@ modules:
       Info: {constexpr: HikCameraInfo}
     constructor_args:
       cfg:
-        yaw_offset: -0.4
-        roll_offset: -1.6
+        yaw_offset: 0.0
+        roll_offset: 0.6
         yaw_rate_threshold: 2.0
-        default_bullet_speed: 21.0
+        default_bullet_speed: 21.7
         min_valid_bullet_speed: 14.0
         ballistic_drag_k: 0.02
         ballistic_integration_dt_s: 0.001
@@ -224,13 +224,13 @@ modules:
         vision_to_command_delay_s: 0.0
         command_transport_delay_s: 0.0
         gimbal_response_delay_s: 0.0
-        fire_delay_s: 0.075
+        fire_delay_s: 0.05
         low_speed_extra_predict_s: 0.075
         high_speed_extra_predict_s: 0.075
-        min_fire_threshold: 0.003
-        max_fire_threshold: 0.05
+        min_fire_threshold: 0.06
+        max_fire_threshold: 0.48
         enable_mpc_plan: true
-        mpc_fire_thresh: 0.05
+        mpc_fire_thresh: 0.48
         max_yaw_acc: 50.0
         q_yaw_pos: 9000000.0
         q_yaw_vel: 0.0
