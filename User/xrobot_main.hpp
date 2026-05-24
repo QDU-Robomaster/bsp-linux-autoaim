@@ -49,7 +49,7 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   static Aimer<AutoAimRunConfig::HikCameraInfo> aimer(
       hw,
       appmgr,
-      {-1.0, -0.40107045659157625, 2.0, 21.0, 14.0, 0.02, 0.001, 16, -20.0, 35.0, true, 0.0, 0.0, 0.0, 0.0, 0.075, 0.075, 0.075, 0.003, 0.05, true, 0.05, 50.0, 9000000.0, 0.0, 1.0, 100.0, 9000000.0, 0.0, 1.0, {true, "aimer_preview", 0.5, 1, 1, "web", "0.0.0.0", 8083, "aimer_preview", 30.0}, true, 0.05, 1.0}
+      {-1.0, -0.40107045659157625, 2.0, 21.0, 14.0, 0.02, 0.001, 16, -20.0, 35.0, true, 0.0, 0.0, 0.0, 0.0, 0.075, 0.075, 0.075, 0.003, 0.05, true, 0.05, 50.0, 9000000.0, 0.0, 1.0, 100.0, 9000000.0, 0.0, 1.0, {true, "aimer_preview", 0.5, 1, 1, "web", "0.0.0.0", 8083, "aimer_preview", 30.0}, true, 0.05, 1.0, true}
   );
   static SharedTopicClient shared_topic_tx(
       hw,

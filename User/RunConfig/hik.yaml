@@ -253,6 +253,7 @@ modules:
         enable_runtime_log: true
         bullet_speed_log_delta: 0.05
         heat_log_delta: 1.0
+        convert_raw_gimbal_quat_to_body: true
 
   - id: shared_topic_tx
     name: SharedTopicClient
