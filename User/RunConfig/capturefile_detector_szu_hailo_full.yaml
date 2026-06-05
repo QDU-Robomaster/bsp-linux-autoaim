@@ -67,29 +67,23 @@ modules:
           min_confidence: 0.1
           enable_quad_check: true
           min_quad_area_px: 16.0
+          logit_threshold: 0.619
+          nms_threshold: 0.45
+          bbox_expand: 0.1
+          max_detections: 128
         referee_auto_detect_color: false
         referee_domain: host
         referee_topic: robot_game_ref
         preview:
-          # detector 实时预览总开关；false 时不启动预览线程，CI/回放默认关闭。
           enabled: false
-          # OpenCV 窗口名，只影响本模块预览窗口标题。
           preview_window_name: armor_detector_preview
-          # 显示缩放比例，只影响本模块预览画面。
           preview_scale: 0.5
-          # cv::waitKey 事件轮询时间，单位 ms。
           preview_wait_key_ms: 1
-          # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
           queue_capacity: 1
-          # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
           output_mode: window
-          # Web 监听地址；0.0.0.0 表示允许局域网访问。
           web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
           web_port: 8080
-          # Web stream 名；直接取流路径 /stream/armor_detector。
           web_stream_name: armor_detector
-          # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
       sync: '@camera_frame_sync'
 
@@ -106,64 +100,41 @@ modules:
           max_temp_lost_count: 15
           outpost_max_temp_lost_count: 75
           target_select:
-            # 多车选择中，近期可见装甲数量的权重。
             observed_count_weight: 1.6
-            # 多车选择中，目标距离越近得分越高；实车默认提高该项权重。
             distance_weight: 2.0
-            # 多车选择中，图像装甲面积越大得分越高。
             area_weight: 1.2
-            # 多车选择中，自旋越快得分越低。
             spin_weight: 0.8
-            # 多车选择中，目标越接近当前视轴得分越高；实车默认提高该项权重。
             angle_weight: 2.0
-            # 距离评分满分对应的最大距离，单位 m。
             max_distance_m: 8.0
-            # 距离评分从满分降到 0 的距离跨度，单位 m。
             distance_span_m: 7.5
-            # 面积评分归一化像素面积。
             area_norm_px: 6000.0
-            # 观测数量评分归一化数量。
             observed_count_norm: 4.0
-            # 自旋评分归一化角速度，单位 rad/s。
             max_spin_rad_s: 8.0
-            # 视轴角差评分归一化距离，使用归一化图像坐标。
             max_angle_norm: 0.5
-            # detecting 状态的目标选择分数倍率。
             detecting_scale: 0.55
-            # temp_lost 状态的目标选择分数倍率。
             temp_lost_scale: 0.35
-            # 当前目标切换到更高分目标所需的最小分差。
             switch_margin: 0.25
         extrinsic:
           camera_mount_to_body:
             rotation: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]
             translation: [0.041861764663827829, 0.136068364765315, 0.0089956658836358675]
         preview:
-          # tracker 实时预览总开关；false 时不启动预览线程，CI/回放默认关闭。
           enabled: false
-          # OpenCV 窗口名，只影响本模块预览窗口标题。
           preview_window_name: armor_tracker_preview
-          # 显示缩放比例，只影响窗口画面，不改变 tracker 输入图像。
           preview_scale: 0.5
-          # cv::waitKey 事件轮询时间，单位 ms。
           preview_wait_key_ms: 1
-          # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
           queue_capacity: 1
-          # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
           output_mode: window
-          # Web 监听地址；0.0.0.0 表示允许局域网访问。
           web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
           web_port: 8080
-          # Web stream 名；直接取流路径 /stream/armor_tracker。
           web_stream_name: armor_tracker
-          # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
       sync: '@camera_frame_sync'
+
   - id: aimer
     name: Aimer
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      MainCameraInfo: {constexpr: MainCameraInfo}
     constructor_args:
       cfg:
         yaw_offset: -1.0
@@ -173,29 +144,28 @@ modules:
         min_valid_bullet_speed: 14.0
         ballistic_drag_k: 0.02
         ballistic_integration_dt_s: 0.001
-        ballistic_max_iterations: 16
-        ballistic_min_elevation_deg: -20.0
-        ballistic_max_elevation_deg: 35.0
-        auto_fire: true
-        image_to_now_s: 0.0
+        max_target_history: 16
+        min_yaw_deg: -20.0
+        max_yaw_deg: 35.0
+        enable_command_output: true
+        yaw_delay_s: 0.0
+        roll_delay_s: 0.0
         vision_to_command_delay_s: 0.0
         command_transport_delay_s: 0.0
         gimbal_response_delay_s: 0.0
-        fire_delay_s: 0.0
-        low_speed_extra_predict_s: 0.015
-        high_speed_extra_predict_s: 0.03
-        min_fire_threshold: 0.003
+        fire_delay_s: 0.015
+        low_speed_extra_predict_s: 0.03
+        high_speed_extra_predict_s: 0.003
+        min_fire_threshold: 0.05
         max_fire_threshold: 0.05
         enable_mpc_plan: true
-        mpc_fire_thresh: 0.05
-        max_yaw_acc: 50.0
-        q_yaw_pos: 9000000.0
-        q_yaw_vel: 0.0
-        r_yaw_acc: 1.0
-        max_roll_acc: 100.0
-        q_roll_pos: 9000000.0
-        q_roll_vel: 0.0
-        r_roll_acc: 1.0
+        target_switch_timeout_s: 0.05
+        q_yaw_pos: 50.0
+        q_yaw_vel: 9000000.0
+        r_yaw_acc: 0.0
+        q_roll_pos: 1.0
+        q_roll_vel: 100.0
+        r_roll_acc: 9000000.0
         preview:
           enabled: false
           preview_window_name: aimer_preview
@@ -208,5 +178,5 @@ modules:
           web_stream_name: aimer_preview
           max_fps: 30.0
         enable_runtime_log: true
-        bullet_speed_log_delta: 0.05
-        heat_log_delta: 1.0
+        runtime_log_interval_s: 0.05
+        command_output_scale: 1.0

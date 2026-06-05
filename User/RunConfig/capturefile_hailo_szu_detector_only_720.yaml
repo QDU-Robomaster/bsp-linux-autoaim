@@ -1,0 +1,87 @@
+global_settings:
+  monitor_sleep_ms: 1000
+
+constexpr_namespace: AutoAimRunConfig
+constexpr_includes:
+  - CameraBase.hpp
+
+constexprs:
+  EnableDevCUsb:
+    type: bool
+    value: false
+
+  MainCameraInfo:
+    type: CameraTypes::CameraInfo
+    value:
+      width: 720
+      height: 540
+      step: 2160
+      encoding: {expr: "CameraTypes::Encoding::BGR8"}
+      camera_matrix: [1164.3428599490444, 0.0, 366.6782312546237, 0.0, 1164.335053894998, 270.30936434613864, 0.0, 0.0, 1.0]
+      distortion_model: {expr: "CameraTypes::DistortionModel::PLUMB_BOB"}
+      distortion_coefficients: [-0.09182103918709904, 0.4639907346830205, 0.002609878642637282, 0.0009819586010405485, -0.4751278850310457]
+      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+      projection_matrix: [1164.3428599490444, 0.0, 366.6782312546237, 0.0, 0.0, 1164.335053894998, 270.30936434613864, 0.0, 0.0, 0.0, 1.0, 0.0]
+
+modules:
+  - id: camera
+    name: CaptureFileCamera
+    template_args:
+      Info:
+        constexpr: MainCameraInfo
+    constructor_args:
+      runtime:
+        file_path: ./data/camera_internal_recording_20260428/damo_720x540_400f.avi
+        imu_csv_path: ./data/camera_internal_recording_20260428/damo_imu.csv
+        camera_name: capturefile_camera
+        image_topic_name: capturefile_image
+        imu_topic_name: capturefile_imu
+        realtime: true
+        loop: false
+        max_frames: 0
+
+  - id: camera_frame_sync
+    name: CameraFrameSync
+    template_args:
+      Info:
+        constexpr: MainCameraInfo
+    constructor_args:
+      camera: "@camera"
+      runtime:
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU"}
+        offset_us: 0
+        host_topic_domain_name: libxr_def_domain
+        sync_command_topic_name: camera_sync_command
+        sync_result_topic_name: camera_sync_result
+        sync_probe_div: 3
+        sync_active_level: 1
+        target_trigger_hz: {expr: "50.0F"}
+
+  - id: armor_detector
+    name: ArmorDetector
+    template_args:
+      Info:
+        constexpr: MainCameraInfo
+    constructor_args:
+      cfg:
+        detect_color: 2
+        network:
+          model: {expr: ArmorDetectorModel::INT16_HEAD_L}
+          min_confidence: 0.1
+          enable_quad_check: true
+          min_quad_area_px: 16.0
+        referee_auto_detect_color: false
+        referee_domain: host
+        referee_topic: robot_game_ref
+        preview:
+          enabled: false
+          preview_window_name: armor_detector_preview
+          preview_scale: 0.5
+          preview_wait_key_ms: 1
+          queue_capacity: 1
+          output_mode: window
+          web_bind_address: 0.0.0.0
+          web_port: 8080
+          web_stream_name: armor_detector
+          max_fps: 30.0
+      sync: "@camera_frame_sync"

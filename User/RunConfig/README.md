@@ -32,3 +32,21 @@ python3 -m xrobot.GenerateMain --config User/RunConfig/capturefile.yaml --output
 ```
 
 不带 `--config` 时使用 `User/xrobot.yaml`。
+
+## Hailo Variants
+
+当前 detector 已支持固定 `network.model` 枚举选择。当前支持的 `6` 个值是：
+
+- `ArmorDetectorModel::INT8_HEAD_L`
+- `ArmorDetectorModel::INT8_GRID_L`
+- `ArmorDetectorModel::INT16_HEAD_L`
+- `ArmorDetectorModel::INT8_HEAD`
+- `ArmorDetectorModel::INT8_GRID`
+- `ArmorDetectorModel::INT16_HEAD`
+
+示例：
+
+```yaml
+network:
+  model: {expr: ArmorDetectorModel::INT8_GRID_L}
+```
