@@ -63,11 +63,10 @@ modules:
       cfg:
         detect_color: 2
         network:
+          model: {expr: ArmorDetectorModel::INT16_HEAD_L}
           min_confidence: 0.1
           enable_quad_check: true
           min_quad_area_px: 16.0
-          openvino_device: AUTO_DETECT
-          openvino_performance_mode: LATENCY
         referee_auto_detect_color: false
         referee_domain: host
         referee_topic: robot_game_ref
@@ -92,11 +91,6 @@ modules:
           web_stream_name: armor_detector
           # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
-        number_refine:
-          enabled: true
-          detector_min_confidence: 0.2
-          classifier_min_confidence: 0.9
-          enforce_type_compatibility: true
       sync: '@camera_frame_sync'
 
   - id: armor_tracker
