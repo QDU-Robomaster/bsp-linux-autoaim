@@ -178,8 +178,9 @@ int main(int, char **)
     peripherals.Register(LibXR::Entry<LibXR::UART>({devc_usb, {"DevC-USB"}}));
 
     static LibXR::Topic::Domain host_domain("host");
-    static LibXR::Topic robot_game_referee_topic(
-        "sentry_ref", sizeof(RobotGameRefereeSummary), &host_domain, true);
+    [[maybe_unused]] static LibXR::Topic robot_game_referee_topic =
+        LibXR::Topic::CreateTopic<RobotGameRefereeSummary>("sentry_ref", &host_domain,
+                                                           true);
   }
 
   XRobotMain(peripherals);
