@@ -10,6 +10,7 @@
 #include <sys/file.h>
 #include <unistd.h>
 
+#include "Aimer.hpp"
 #include "app_framework.hpp"
 #include "libxr.hpp"
 #include "libxr_rw.hpp"
@@ -22,39 +23,6 @@
 #include "thread.hpp"
 #include "xrobot_constexpr.hpp"
 #include "xrobot_main.hpp"
-
-struct [[gnu::packed]] RobotGameRefereeStatus
-{
-  uint8_t robot_id{};
-  uint8_t robot_level{};
-  uint16_t remain_hp{};
-  uint16_t max_hp{};
-  uint16_t shooter_cooling_value{};
-  uint16_t shooter_heat_limit{};
-  uint16_t chassis_power_limit{};
-  uint8_t power_gimbal_output : 1 {};
-  uint8_t power_chassis_output : 1 {};
-  uint8_t power_launcher_output : 1 {};
-};
-
-struct [[gnu::packed]] RobotGameRefereeGame
-{
-  uint8_t game_type : 4 {};
-  uint8_t game_progress : 4 {};
-  uint16_t stage_remain_time{};
-  uint64_t sync_time_stamp{};
-};
-
-struct [[gnu::packed]] RobotGameRefereeSummary
-{
-  RobotGameRefereeStatus robot_status{};
-  RobotGameRefereeGame game_status{};
-  uint8_t reserved_tail[68]{};
-};
-
-static_assert(sizeof(RobotGameRefereeStatus) == 13);
-static_assert(sizeof(RobotGameRefereeGame) == 11);
-static_assert(sizeof(RobotGameRefereeSummary) == 92);
 
 namespace
 {
@@ -97,18 +65,16 @@ static int AcquireBspLock()
   return fd;
 }
 
-void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::MicrosecondTimestamp,
-                   LibXR::RawData &log_data) =
-    [](bool, LibXR::Topic tp, LibXR::MicrosecondTimestamp timestamp,
-       LibXR::RawData &log_data)
+void (*log_cb_fun)(bool in_isr, LibXR::Topic,
+                   const LibXR::Topic::MessageView<LibXR::LogData>& log_message) =
+    [](bool, LibXR::Topic tp,
+       const LibXR::Topic::MessageView<LibXR::LogData>& log_message)
 {
   UNUSED(tp);
+  ASSERT(log_message.data != nullptr);
 
-  auto log = reinterpret_cast<LibXR::LogData *>(log_data.addr_);
-  if (log == nullptr)
-  {
-    return;
-  }
+  const auto& log = *log_message.data;
+  const auto timestamp = log_message.timestamp;
 
   if (LibXR::STDIO::write_ && LibXR::STDIO::write_->Writable())
   {
@@ -134,9 +100,9 @@ void (*log_cb_fun)(bool in_isr, LibXR::Topic, LibXR::MicrosecondTimestamp,
     {
       const uint32_t timestamp_ms =
           static_cast<uint32_t>(static_cast<uint64_t>(timestamp) / 1000U);
-      f << FileLogLevelName(log->level) << " [" << timestamp_ms << "]("
-        << (log->file ? log->file : "?") << ':' << log->line << ") "
-        << log->message << '\n';
+      f << FileLogLevelName(log.level) << " [" << timestamp_ms << "]("
+        << (log.file ? log.file : "?") << ':' << log.line << ") " << log.message
+        << '\n';
       f.flush();
     }
   }
@@ -179,8 +145,8 @@ int main(int, char **)
 
     static LibXR::Topic::Domain host_domain("host");
     [[maybe_unused]] static LibXR::Topic robot_game_referee_topic =
-        LibXR::Topic::CreateTopic<RobotGameRefereeSummary>("sentry_ref", &host_domain,
-                                                           true);
+        LibXR::Topic::CreateTopic<AimerRefereeSummary>("robot_game_ref", &host_domain,
+                                                       true);
   }
 
   XRobotMain(peripherals);

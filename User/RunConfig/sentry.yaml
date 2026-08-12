@@ -19,37 +19,31 @@ constexprs:
   HikSyncOffsetUs:
     type: int
     value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
-  MainCameraInfo:
-    type: CameraTypes::CameraInfo
+  MainCameraCalibration:
+    type: CameraTypes::CameraCalibration
     value:
-      width: 1440
-      height: 1080
-      step: 4320
-      encoding: {expr: CameraTypes::Encoding::BGR8}
-      camera_matrix: [2348.0610281828863, 0.0, 753.7199990513768, 0.0, 2341.430205137848, 544.3093638576938, 0.0, 0.0, 1.0]
+      native_width: 1440
+      native_height: 1080
+      camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
       distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
-      distortion_coefficients: [-0.09324913488777978, 0.3089185338125273, 0.0011528970103605383, -0.0010514494107999794, 0.0]
+      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
       rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-      projection_matrix: [2334.0852301109603, 0.0, 753.2190261545588, 0.0, 0.0, 2331.8191930180155, 544.7774518626655, 0.0, 0.0, 0.0, 1.0, 0.0]
-  HikCameraInfo:
-    type: CameraTypes::CameraInfo
+      projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
+  MainFrameLayout:
+    type: CameraTypes::FrameLayout
     value:
       width: 720
       height: 540
       step: 2160
       encoding: {expr: CameraTypes::Encoding::BGR8}
-      camera_matrix: [1174.0305140914431, 0.0, 376.8599995256884, 0.0, 1170.715102568924, 272.1546819288469, 0.0, 0.0, 1.0]
-      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
-      distortion_coefficients: [-0.09324913488777978, 0.3089185338125273, 0.0011528970103605383, -0.0010514494107999794, 0.0]
-      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-      projection_matrix: [1167.0426150554802, 0.0, 376.6095130772794, 0.0, 0.0, 1165.9095965090078, 272.3887259313328, 0.0, 0.0, 0.0, 1.0, 0.0]
 
 modules:
   - id: camera
     name: HikCamera
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
+      calibration: {constexpr: MainCameraCalibration}
       runtime:
         camera_name: gimbal
         image_topic_name: camera_image
@@ -67,11 +61,11 @@ modules:
   - id: camera_frame_sync
     name: CameraFrameSync
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       camera: '@camera'
       runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::SyncMode::LATEST_IMU"}
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::LATEST_IMU"}
         offset_us: {constexpr: HikSyncOffsetUs}
         host_topic_domain_name: host
         sync_command_topic_name: camera_sync_command
@@ -79,7 +73,7 @@ modules:
         sync_probe_div: 3
         sync_active_level: 1
         target_trigger_hz: {expr: 100.0F}
-        raw_imu_frame: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY"}
+        raw_imu_frame: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY"}
         raw_quat_topic_name: ahrs_quaternion
 
   - id: shared_topic_rx
@@ -90,24 +84,23 @@ modules:
       topic_configs:
         - [ahrs_quaternion, host]
         - [camera_sync_result, host]
-        - [sentry_ref, host]
+        - [robot_game_ref, host]
 
   - id: armor_detector
     name: ArmorDetector
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         detect_color: 2
         network:
+          model: {expr: ArmorDetectorModel::INT16_HEAD_L}
           min_confidence: 0.1
           enable_quad_check: true
           min_quad_area_px: 16.0
-          openvino_device: AUTO_DETECT
-          openvino_performance_mode: LATENCY
         referee_auto_detect_color: true
         referee_domain: host
-        referee_topic: sentry_ref
+        referee_topic: robot_game_ref
         preview:
           enabled: false
           preview_window_name: armor_detector_preview
@@ -129,7 +122,7 @@ modules:
   - id: armor_tracker
     name: ArmorTracker
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         tracker:
@@ -173,7 +166,7 @@ modules:
   - id: aimer
     name: Aimer
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         yaw_offset: -0.4
@@ -221,6 +214,7 @@ modules:
         bullet_speed_log_delta: 0.05
         heat_log_delta: 1.0
         convert_raw_gimbal_quat_to_body: true
+      calibration: {constexpr: MainCameraCalibration}
 
   - id: shared_topic_tx
     name: SharedTopicClient

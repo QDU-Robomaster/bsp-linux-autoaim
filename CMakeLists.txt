@@ -7,8 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ## 强制启用警告
 add_definitions(-Wall -Werror)
 
-add_compile_options(-g -O0)
-
 ## 导出编译命令以便使用 clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

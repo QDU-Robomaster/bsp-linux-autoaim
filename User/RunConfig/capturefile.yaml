@@ -10,25 +10,46 @@ constexprs:
   EnableDevCUsb:
     type: bool
     value: false
-  MainCameraInfo:
-    type: CameraTypes::CameraInfo
+  MainCameraCalibration:
+    type: CameraTypes::CameraCalibration
     value:
-      width: 1440
-      height: 1080
-      step: 4320
-      encoding: {expr: CameraTypes::Encoding::BGR8}
+      native_width: 1440
+      native_height: 1080
       camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
       distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
       distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
       rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
       projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
+  MainFrameLayout:
+    type: CameraTypes::FrameLayout
+    value:
+      width: 1440
+      height: 1080
+      step: 4320
+      encoding: {expr: CameraTypes::Encoding::BGR8}
+  MainFrameGeometry:
+    type: CameraTypes::FrameGeometry
+    value:
+      epoch: 1
+      width: 1440
+      height: 1080
+      step: 4320
+      roi_offset_x_native: 0
+      roi_offset_y_native: 0
+      decimation_x: 1
+      decimation_y: 1
+      flags: {expr: CameraTypes::FRAME_GEOMETRY_NONE}
+      reserved: 0
+      sample_phase_x_native: {expr: 0.0F}
+      sample_phase_y_native: {expr: 0.0F}
 
 modules:
   - id: camera
     name: CaptureFileCamera
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
+      calibration: {constexpr: MainCameraCalibration}
       runtime:
         file_path: ./data/camera_internal_recording_20260428/damo_clean.avi
         frame_csv_path: ""
@@ -39,15 +60,16 @@ modules:
         realtime: true
         loop: false
         max_frames: 0
+        geometry: {constexpr: MainFrameGeometry}
 
   - id: camera_frame_sync
     name: CameraFrameSync
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       camera: '@camera'
       runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainCameraInfo>::SyncMode::LATEST_IMU"}
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::LATEST_IMU"}
         offset_us: 0
         host_topic_domain_name: libxr_def_domain
         sync_command_topic_name: camera_sync_command
@@ -59,7 +81,7 @@ modules:
   - id: armor_detector
     name: ArmorDetector
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         detect_color: 2
@@ -97,7 +119,7 @@ modules:
   - id: armor_tracker
     name: ArmorTracker
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         tracker:
@@ -164,7 +186,7 @@ modules:
   - id: aimer
     name: Aimer
     template_args:
-      Info: {constexpr: MainCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         yaw_offset: -1.0
@@ -211,3 +233,4 @@ modules:
         enable_runtime_log: true
         bullet_speed_log_delta: 0.05
         heat_log_delta: 1.0
+      calibration: {constexpr: MainCameraCalibration}

@@ -54,41 +54,36 @@ jobs:
         PY
         while IFS=$'\t' read -r module url ref; do
           rm -rf "Modules/${module}"
-          git clone --depth=1 --recurse-submodules --branch "${ref}" "${url}" "Modules/${module}"
-        done </tmp/xrobot_module_clone_list.tsv
-    - name: detect OpenVINO
-      shell: bash
-      run: |
-        set -euo pipefail
-        openvino_dir=""
-        for root in /opt /usr/local /usr; do
-          openvino_dir="$(find "$root" -type d -path '*/runtime/cmake' -print -quit 2>/dev/null || true)"
-          if [ -n "$openvino_dir" ]; then
-            break
+          if [[ "${ref}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            git init "Modules/${module}"
+            git -C "Modules/${module}" remote add origin "${url}"
+            git -C "Modules/${module}" fetch --depth=1 origin "${ref}"
+            git -C "Modules/${module}" checkout --detach FETCH_HEAD
+            git -C "Modules/${module}" submodule update --init --recursive --depth=1
+          else
+            git clone --depth=1 --recurse-submodules --branch "${ref}" "${url}" "Modules/${module}"
           fi
-        done
-        if [ -z "$openvino_dir" ]; then
-          echo "OpenVINO runtime CMake directory not found" >&2
-          exit 1
-        fi
-        echo "OPENVINO_DIR=$openvino_dir" >> "$GITHUB_ENV"
+        done </tmp/xrobot_module_clone_list.tsv
     - name: generate capturefile preset
       run: xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
     - name: config cmake capturefile
       run: >
         cmake . -Bbuild_capturefile -G Ninja
-        -DOpenVINO_DIR="$OPENVINO_DIR"
+        -DBUILD_TESTING=ON
         -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
         -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
         -DLIBXR_PRINT_ENABLE_POINTER=ON
     - name: build capturefile
-      run: cmake --build build_capturefile --target rm_auto_aim
+      run: cmake --build build_capturefile
+    - name: test capturefile geometry contracts
+      run: >-
+        ctest --test-dir build_capturefile/libxr --output-on-failure
+        --no-tests=error
     - name: generate hik preset
       run: xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
     - name: config cmake hik
       run: >
         cmake . -Bbuild_hik -G Ninja
-        -DOpenVINO_DIR="$OPENVINO_DIR"
         -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
         -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
         -DLIBXR_PRINT_ENABLE_POINTER=ON

@@ -1,13 +1,13 @@
 modules:
-- qdu-future/CameraBase
-- qdu-future/HikCamera
-- qdu-future/CaptureFileCamera
+- qdu-future/CameraBase@5956c929e79ad93e9d1a70c9c162841db4dced53
+- qdu-future/HikCamera@5c736845d84a81aafa880ae25732d8f5a8af203c
+- qdu-future/CaptureFileCamera@f833d87899b69d3897a06e5d9d4c308992d7d059
 - qdu-future/CameraSync
-- qdu-future/CameraFrameSync
+- qdu-future/CameraFrameSync@242a85553ba8ab1ad2387fe2de4e1add07a5e078
 - xrobot-org/SharedTopic
 - xrobot-org/SharedTopicClient
 - qdu-future/VisionPreview
-- qdu-future/ArmorDetector
-- qdu-future/ArmorTracker
-- qdu-future/Aimer
-- qdu-future/VisionCapture
+- qdu-future/ArmorDetector@ebd14df5ccf0e7753a014f5902f5b19d5ed734fa
+- qdu-future/ArmorTracker@142e27568e21f56bdb958b5ef3e496af928ed258
+- qdu-future/Aimer@044f7741160c6e19c1677cc48c3ed42664626685
+- qdu-future/VisionCapture@820063244a0aa5e984ae9933ab85e783a4f15995

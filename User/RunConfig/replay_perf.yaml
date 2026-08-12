@@ -1,5 +1,5 @@
 global_settings:
-  monitor_sleep_ms: 1000
+  monitor_sleep_ms: 100
 
 constexpr_namespace: AutoAimRunConfig
 
@@ -9,16 +9,7 @@ constexpr_includes:
 constexprs:
   EnableDevCUsb:
     type: bool
-    value: true
-  HikExposureTimeUs:
-    type: float
-    value: {expr: 2000.0F}
-  HikTriggerDelayUs:
-    type: int
-    value: 75
-  HikSyncOffsetUs:
-    type: int
-    value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
+    value: false
   MainCameraCalibration:
     type: CameraTypes::CameraCalibration
     value:
@@ -26,7 +17,7 @@ constexprs:
       native_height: 1080
       camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
       distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
-      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
+      distortion_coefficients: [-0.09182103918709904, 0.4639907346830205, 0.002609878642637282, 0.0009819586010405485, -0.4751278850310457]
       rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
       projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
   MainFrameLayout:
@@ -36,27 +27,40 @@ constexprs:
       height: 540
       step: 2160
       encoding: {expr: CameraTypes::Encoding::BGR8}
+  MainFrameGeometry:
+    type: CameraTypes::FrameGeometry
+    value:
+      epoch: 1
+      width: 720
+      height: 540
+      step: 2160
+      roi_offset_x_native: 0
+      roi_offset_y_native: 0
+      decimation_x: 2
+      decimation_y: 2
+      flags: {expr: CameraTypes::FRAME_GEOMETRY_NONE}
+      reserved: 0
+      sample_phase_x_native: {expr: 0.0F}
+      sample_phase_y_native: {expr: 0.0F}
 
 modules:
   - id: camera
-    name: HikCamera
+    name: CaptureFileCamera
     template_args:
       Layout: {constexpr: MainFrameLayout}
     constructor_args:
       calibration: {constexpr: MainCameraCalibration}
       runtime:
-        camera_name: gimbal
-        image_topic_name: camera_image
-        imu_topic_name: camera_imu
-        gain: {expr: 16.0F}
-        exposure_time: {constexpr: HikExposureTimeUs}
-        external_trigger: true
-        acquisition_frame_rate: {expr: 249.0F}
-        grab_timeout_ms: 100
-        image_node_num: 3
-        decimation_horizontal: 2
-        decimation_vertical: 2
-        rotate_180: false
+        file_path: /home/xiao/codex_runs/pi_full_replay_perf_20260811T092650/input/new_v7_excerpt_frames.bin
+        frame_csv_path: /home/xiao/codex_runs/pi_full_replay_perf_20260811T092650/input/new_v7_excerpt_frames.csv
+        imu_csv_path: /home/xiao/codex_runs/pi_full_replay_perf_20260811T092650/input/20260507_230642_gimbal_imu.csv
+        camera_name: replay_camera
+        image_topic_name: replay_image
+        imu_topic_name: replay_imu
+        realtime: true
+        loop: false
+        max_frames: 1600
+        geometry: {constexpr: MainFrameGeometry}
 
   - id: camera_frame_sync
     name: CameraFrameSync
@@ -65,26 +69,14 @@ modules:
     constructor_args:
       camera: '@camera'
       runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::RAW_PROBE"}
-        offset_us: {constexpr: HikSyncOffsetUs}
-        host_topic_domain_name: host
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::LATEST_IMU"}
+        offset_us: 0
+        host_topic_domain_name: libxr_def_domain
         sync_command_topic_name: camera_sync_command
         sync_result_topic_name: camera_sync_result
         sync_probe_div: 3
         sync_active_level: 1
         target_trigger_hz: {expr: 100.0F}
-
-  - id: shared_topic_rx
-    name: SharedTopic
-    constructor_args:
-      uart_name: "DevC-USB"
-      buffer_size: 4096
-      topic_configs:
-        - [gimbal_gyro, host]
-        - [gimbal_accl, host]
-        - [gimbal_quat, host]
-        - [camera_sync_result, host]
-        - [robot_game_ref, host]
 
   - id: armor_detector
     name: ArmorDetector
@@ -98,29 +90,19 @@ modules:
           min_confidence: 0.1
           enable_quad_check: true
           min_quad_area_px: 16.0
-        referee_auto_detect_color: true
+        referee_auto_detect_color: false
         referee_domain: host
         referee_topic: robot_game_ref
         preview:
-          # detector 实时预览总开关；false 时不启动预览线程，实机默认关闭。
           enabled: false
-          # OpenCV 窗口名，只影响本模块预览窗口标题。
           preview_window_name: armor_detector_preview
-          # 显示缩放比例，只影响本模块预览画面。
           preview_scale: 0.5
-          # cv::waitKey 事件轮询时间，单位 ms。
           preview_wait_key_ms: 1
-          # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
           queue_capacity: 1
-          # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
           output_mode: window
-          # Web 监听地址；0.0.0.0 表示允许局域网访问。
           web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
           web_port: 8080
-          # Web stream 名；直接取流路径 /stream/armor_detector。
           web_stream_name: armor_detector
-          # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
       sync: '@camera_frame_sync'
 
@@ -137,60 +119,37 @@ modules:
           max_temp_lost_count: 15
           outpost_max_temp_lost_count: 75
           target_select:
-            # 多车选择中，近期可见装甲数量的权重。
             observed_count_weight: 1.6
-            # 多车选择中，目标距离越近得分越高；实车默认提高该项权重。
             distance_weight: 2.0
-            # 多车选择中，图像装甲面积越大得分越高。
             area_weight: 1.2
-            # 多车选择中，自旋越快得分越低。
             spin_weight: 0.8
-            # 多车选择中，目标越接近当前视轴得分越高；实车默认提高该项权重。
             angle_weight: 2.0
-            # 距离评分满分对应的最大距离，单位 m。
             max_distance_m: 8.0
-            # 距离评分从满分降到 0 的距离跨度，单位 m。
             distance_span_m: 7.5
-            # 面积评分归一化像素面积。
             area_norm_px: 6000.0
-            # 观测数量评分归一化数量。
             observed_count_norm: 4.0
-            # 自旋评分归一化角速度，单位 rad/s。
             max_spin_rad_s: 8.0
-            # 视轴角差评分归一化距离，使用归一化图像坐标。
             max_angle_norm: 0.5
-            # detecting 状态的目标选择分数倍率。
             detecting_scale: 0.55
-            # temp_lost 状态的目标选择分数倍率。
             temp_lost_scale: 0.35
-            # 当前目标切换到更高分目标所需的最小分差。
             switch_margin: 0.25
         extrinsic:
           camera_mount_to_body:
             rotation: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]
-            translation: [0.041861764663827829, 0.136068364765315, 0.0089956658836358675]
+            translation: [0.04186176466382783, 0.136068364765315, 0.008995665883635868]
         preview:
-          # tracker 实时预览总开关；false 时不启动预览线程，实机默认关闭。
           enabled: false
-          # OpenCV 窗口名，只影响本模块预览窗口标题。
           preview_window_name: armor_tracker_preview
-          # 显示缩放比例，只影响窗口画面，不改变 tracker 输入图像。
           preview_scale: 0.5
-          # cv::waitKey 事件轮询时间，单位 ms。
           preview_wait_key_ms: 1
-          # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
           queue_capacity: 1
-          # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
           output_mode: window
-          # Web 监听地址；0.0.0.0 表示允许局域网访问。
           web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
           web_port: 8080
-          # Web stream 名；直接取流路径 /stream/armor_tracker。
           web_stream_name: armor_tracker
-          # 预览最大接受帧率；<= 0 表示不限频。
           max_fps: 30.0
       sync: '@camera_frame_sync'
+
   - id: aimer
     name: Aimer
     template_args:
@@ -238,16 +197,8 @@ modules:
           web_port: 8080
           web_stream_name: aimer_preview
           max_fps: 30.0
-        enable_runtime_log: true
+        enable_runtime_log: false
         bullet_speed_log_delta: 0.05
         heat_log_delta: 1.0
-        convert_raw_gimbal_quat_to_body: true
+        convert_raw_gimbal_quat_to_body: false
       calibration: {constexpr: MainCameraCalibration}
-
-  - id: shared_topic_tx
-    name: SharedTopicClient
-    constructor_args:
-      uart_name: "DevC-USB"
-      slot_count: 256
-      topic_configs:
-        - [camera_sync_command, host]

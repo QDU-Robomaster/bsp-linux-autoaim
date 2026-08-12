@@ -19,37 +19,31 @@ constexprs:
   HikSyncOffsetUs:
     type: int
     value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
-  MainCameraInfo:
-    type: CameraTypes::CameraInfo
+  MainCameraCalibration:
+    type: CameraTypes::CameraCalibration
     value:
-      width: 1440
-      height: 1080
-      step: 4320
-      encoding: {expr: CameraTypes::Encoding::BGR8}
+      native_width: 1440
+      native_height: 1080
       camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
       distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
       distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
       rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
       projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
-  HikCameraInfo:
-    type: CameraTypes::CameraInfo
+  MainFrameLayout:
+    type: CameraTypes::FrameLayout
     value:
       width: 720
       height: 540
       step: 2160
       encoding: {expr: CameraTypes::Encoding::BGR8}
-      camera_matrix: [1164.3428599490444, 0.0, 366.67823125462371, 0.0, 1164.3350538949981, 270.30936434613864, 0.0, 0.0, 1.0]
-      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
-      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
-      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-      projection_matrix: [1164.3428599490444, 0.0, 366.67823125462371, 0.0, 0.0, 1164.3350538949981, 270.30936434613864, 0.0, 0.0, 0.0, 1.0, 0.0]
 
 modules:
   - id: camera
     name: HikCamera
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
+      calibration: {constexpr: MainCameraCalibration}
       runtime:
         camera_name: gimbal
         image_topic_name: camera_image
@@ -67,11 +61,11 @@ modules:
   - id: camera_frame_sync
     name: CameraFrameSync
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       camera: '@camera'
       runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikCameraInfo>::SyncMode::RAW_PROBE"}
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::RAW_PROBE"}
         offset_us: {constexpr: HikSyncOffsetUs}
         host_topic_domain_name: host
         sync_command_topic_name: camera_sync_command
@@ -95,7 +89,7 @@ modules:
   - id: armor_detector
     name: ArmorDetector
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         detect_color: 2
@@ -133,7 +127,7 @@ modules:
   - id: armor_tracker
     name: ArmorTracker
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         tracker:
@@ -200,7 +194,7 @@ modules:
   - id: aimer
     name: Aimer
     template_args:
-      Info: {constexpr: HikCameraInfo}
+      Layout: {constexpr: MainFrameLayout}
     constructor_args:
       cfg:
         yaw_offset: 0.0
@@ -213,7 +207,7 @@ modules:
         ballistic_max_iterations: 16
         ballistic_min_elevation_deg: -20.0
         ballistic_max_elevation_deg: 35.0
-        auto_fire: true
+        auto_fire: false
         image_to_now_s: 0.0
         vision_to_command_delay_s: 0.0
         command_transport_delay_s: 0.0
@@ -248,6 +242,7 @@ modules:
         bullet_speed_log_delta: 0.05
         heat_log_delta: 1.0
         convert_raw_gimbal_quat_to_body: true
+      calibration: {constexpr: MainCameraCalibration}
 
   - id: shared_topic_tx
     name: SharedTopicClient
@@ -255,6 +250,4 @@ modules:
       uart_name: "DevC-USB"
       slot_count: 256
       topic_configs:
-        - [target_euler, host]
-        - [fire_notify, host]
         - [camera_sync_command, host]
