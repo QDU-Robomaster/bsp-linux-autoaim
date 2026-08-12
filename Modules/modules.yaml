@@ -3,7 +3,7 @@ modules:
 - qdu-future/HikCamera@ca3cdfa0558b251456e034dc231ff415a5ee9887
 - qdu-future/CaptureFileCamera@238c8ca18c1ed340d3b9855baac478d2ab911b20
 - qdu-future/CameraSync
-- qdu-future/CameraFrameSync@79f7bf93fd1bce4bbdd9292d3fe12569c893b539
+- qdu-future/CameraFrameSync@5f7b6ff5912b2aeef3852f821bf85f71ce726a72
 - xrobot-org/SharedTopic
 - xrobot-org/SharedTopicClient
 - qdu-future/VisionPreview
