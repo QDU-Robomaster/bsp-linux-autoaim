@@ -1,0 +1,147 @@
+global_settings:
+  monitor_sleep_ms: 1000
+
+constexpr_namespace: AutoAimRunConfig
+
+constexpr_includes:
+  - CameraBase.hpp
+
+constexprs:
+  EnableDevCUsb:
+    type: bool
+    value: true
+  HikExposureTimeUs:
+    type: float
+    value: {expr: 2000.0F}
+  HikTriggerDelayUs:
+    type: int
+    value: 75
+  HikSyncOffsetUs:
+    type: int
+    value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
+  MainCameraCalibration:
+    type: CameraTypes::CameraCalibration
+    value:
+      native_width: 1440
+      native_height: 1080
+      camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
+      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
+      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
+      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+      projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
+  MainFrameLayout:
+    type: CameraTypes::FrameLayout
+    value:
+      width: 1440
+      height: 1080
+      step: 4320
+      encoding: {expr: CameraTypes::Encoding::BGR8}
+
+modules:
+  - id: camera
+    name: HikCamera
+    template_args:
+      Layout: {constexpr: MainFrameLayout}
+    constructor_args:
+      calibration: {constexpr: MainCameraCalibration}
+      runtime:
+        camera_name: gimbal
+        image_topic_name: camera_image
+        imu_topic_name: camera_imu
+        gain: {expr: 16.0F}
+        exposure_time: {constexpr: HikExposureTimeUs}
+        external_trigger: true
+        acquisition_frame_rate: {expr: 249.0F}
+        grab_timeout_ms: 100
+        image_node_num: 3
+        rotate_180: false
+        wide_decimation_x: 1
+        wide_decimation_y: 1
+        wide_trigger_period_us: 50000
+        narrow_trigger_period_us: 50000
+
+  - id: camera_frame_sync
+    name: CameraFrameSync
+    template_args:
+      Layout: {constexpr: MainFrameLayout}
+    constructor_args:
+      camera: '@camera'
+      runtime:
+        mode: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::TRIGGER"}
+        offset_us: {constexpr: HikSyncOffsetUs}
+        host_topic_domain_name: host
+        sync_command_topic_name: camera_sync_command
+        sync_result_topic_name: camera_sync_result
+        sync_active_level: 1
+        camera_settle_us: 10000
+        raw_imu_frame: {expr: "CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY"}
+
+  - id: shared_topic_rx
+    name: SharedTopic
+    constructor_args:
+      uart_name: "DevC-USB"
+      buffer_size: 4096
+      topic_configs:
+        - [gimbal_gyro, host]
+        - [gimbal_accl, host]
+        - [gimbal_quat, host]
+        - [camera_sync_result, host]
+
+  - id: shared_topic_tx
+    name: SharedTopicClient
+    constructor_args:
+      uart_name: "DevC-USB"
+      slot_count: 256
+      topic_configs:
+        - [camera_sync_command, host]
+
+  - id: vision_capture
+    name: VisionCapture
+    template_args:
+      Layout: {constexpr: MainFrameLayout}
+    constructor_args:
+      cfg:
+        mode: calibrate_camera
+        output_dir: runs/calibration/intrinsic
+        session_name: ""
+        record:
+          enabled: true
+          image_format: bmp
+          max_fps: 0.0
+          max_frames: 0
+          save_images: true
+          save_metadata: true
+          save_raw_imu: true
+          flush_every_n: 1
+        preview:
+          enabled: true
+          preview_window_name: intrinsic_calibration
+          preview_scale: 0.5
+          preview_wait_key_ms: 1
+          queue_capacity: 1
+          output_mode: web
+          web_bind_address: 0.0.0.0
+          web_port: 8084
+          web_stream_name: intrinsic_calibration
+          max_fps: 10.0
+        board:
+          type: aruco
+          dictionary: DICT_ARUCO_ORIGINAL
+          marker_length_m: 0.025
+        camera_calibration:
+          enabled: true
+          marker_size_mm: 25.0
+          cols: 8
+          rows: 6
+          auto_save_views: 120
+        calibration_sampling:
+          enabled: true
+          auto_start: true
+          window_size: 8
+          min_accept_interval_us: 500000
+        control:
+          stdin_enabled: false
+        filter:
+          require_synced_imu: false
+          max_image_imu_dt_us: 2000
+      sync: '@camera_frame_sync'

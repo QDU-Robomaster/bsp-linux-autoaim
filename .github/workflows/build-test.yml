@@ -64,6 +64,30 @@ jobs:
             git clone --depth=1 --recurse-submodules --branch "${ref}" "${url}" "Modules/${module}"
           fi
         done </tmp/xrobot_module_clone_list.tsv
+    - name: test calibration preview config contracts
+      run: python3 tests/calibration_preview_config_test.py
+    - name: generate intrinsic calibration preset
+      run: python3 -m xrobot.GenerateMain --config User/RunConfig/camera_intrinsic_calibration.yaml --output User/xrobot_main.hpp
+    - name: config cmake intrinsic calibration
+      run: >
+        cmake . -Bbuild_calibration_intrinsic -G Ninja
+        -DBUILD_TESTING=OFF
+        -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
+        -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
+        -DLIBXR_PRINT_ENABLE_POINTER=ON
+    - name: build intrinsic calibration
+      run: cmake --build build_calibration_intrinsic --target rm_auto_aim
+    - name: generate handeye calibration preset
+      run: python3 -m xrobot.GenerateMain --config User/RunConfig/camera_extrinsic_calibration.yaml --output User/xrobot_main.hpp
+    - name: config cmake handeye calibration
+      run: >
+        cmake . -Bbuild_calibration_handeye -G Ninja
+        -DBUILD_TESTING=OFF
+        -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
+        -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
+        -DLIBXR_PRINT_ENABLE_POINTER=ON
+    - name: build handeye calibration
+      run: cmake --build build_calibration_handeye --target rm_auto_aim
     - name: generate capturefile preset
       run: xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
     - name: config cmake capturefile
