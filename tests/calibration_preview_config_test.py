@@ -75,17 +75,17 @@ EXPECTED_CAPTURE_KEYS = [
 ]
 EXPECTED_MODULE_PINS = [
     "qdu-future/CameraBase@ff44801075f829e8d1b713b6d4649c24f536649c",
-    "qdu-future/HikCamera@8ff874e47776efdd0d52bd86cf9092792aa90497",
-    "qdu-future/CaptureFileCamera@44f4820483c885e9b583cc30c62d56bee687b7f8",
+    "qdu-future/HikCamera@74559e55b25fdea16dc81956bedce1545ff4d28a",
+    "qdu-future/CaptureFileCamera@fce728ce075a8c10c4d05a69fc5437f97eafc3b9",
     "qdu-future/CameraSync@933cb82ace248aa4e005444fdb231ec20e2af02e",
-    "qdu-future/CameraFrameSync@57e416365c1e337e39b3865e26d4d98c8b4b9737",
+    "qdu-future/CameraFrameSync@eb5c939c0225dab2924714d71daf1e4d701531d0",
     "xrobot-org/SharedTopic@489d05938f4b8b24ab950789decb4b43393e8d46",
     "xrobot-org/SharedTopicClient@43365ed2718573f35fe3fdbaadfe4a7565453233",
-    "qdu-future/VisionPreview@e2ed25fe76227e0d5ab34705ea013c5f3a6f4c8b",
+    "qdu-future/VisionPreview@6e30c7417ab9a92446bde6d8f082796cc7041343",
     "qdu-future/ArmorDetector@efde0d1dbf29a7442fa105ecafe245f2b33a47ea",
     "qdu-future/ArmorTracker@9101af40a0d90d18e4c2a4995205105b7cbe712e",
     "qdu-future/Aimer@14c0dcff11977edeac1420bf549855af43e73f39",
-    "qdu-future/VisionCapture@5362fc939991477067146f79dc877ecfcf9ab554",
+    "qdu-future/VisionCapture@5ccd3c19cc9a7aca9e1270177e851a1306c20171",
 ]
 EXPECTED_PRODUCT_CONFIG_SHA256 = {
     "User/xrobot.yaml": "7649f68837d6f983fb2e9a7ef37acc009c2bffa2f991637337a183e0c1b0f0d7",
