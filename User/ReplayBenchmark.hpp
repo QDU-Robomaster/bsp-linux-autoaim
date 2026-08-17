@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
@@ -105,6 +106,66 @@ struct FrameRecord
   std::vector<DetectionRecord> detections{};
 };
 
+struct PipelineTimingRecord
+{
+  uint64_t timestamp_us{0};
+  int64_t slot_acquire_ns{0};
+  int64_t infer_enqueue_ns{0};
+  int64_t infer_start_ns{0};
+  int64_t infer_end_ns{0};
+  int64_t infer_worker_period_ns{0};
+  int64_t infer_worker_intercall_gap_ns{0};
+  int64_t infer_worker_dispatch_gap_ns{0};
+  int64_t output_enqueue_ns{0};
+  int64_t output_start_ns{0};
+  int64_t output_worker_period_ns{0};
+  int64_t output_end_ns{0};
+  int64_t post_enqueue_ns{0};
+  int64_t post_start_ns{0};
+  int64_t post_worker_period_ns{0};
+  int64_t post_end_ns{0};
+  int64_t slot_release_ns{0};
+  uint32_t slots_busy_before_admission{0};
+  uint32_t slot_id{0};
+  uint64_t slot_generation{0};
+  bool infer_backlog_after_call{false};
+  uint64_t no_free_count_at_release{0};
+};
+
+struct AsyncPipelineTimingRecord
+{
+  uint64_t timestamp_us{0};
+  uint64_t admission_seq{0};
+  uint64_t request_id{0};
+  int64_t infer_submit_ns{0};
+  int64_t infer_complete_ns{0};
+  uint64_t completion_seq{0};
+  uint32_t inflight_before_submit{0};
+  uint32_t inflight_after_submit{0};
+  uint32_t inflight_at_complete{0};
+  uint32_t inflight_high_water_after_submit{0};
+  bool completion_reordered{false};
+  int64_t post_enqueue_ns{0};
+  int64_t post_start_ns{0};
+  int64_t output_publish_ns{0};
+  int64_t post_end_ns{0};
+  uint64_t output_seq{0};
+  int64_t slot_release_ns{0};
+};
+
+struct TrackerPipelineTimingRecord
+{
+  uint64_t timestamp_us{0};
+  uint64_t admission_sequence{0};
+  uint64_t worker_sequence{0};
+  double producer_wait_ms{kNaN};
+  bool waited_for_full{false};
+  uint32_t ready_after_commit{0};
+  uint32_t occupied_after_commit{0};
+  uint32_t high_water_after_commit{0};
+  double worker_service_ms{kNaN};
+};
+
 struct Config
 {
   bool enabled{false};
@@ -122,14 +183,20 @@ struct Config
 struct RunState
 {
   std::mutex mutex{};
+  std::mutex pipeline_timing_mutex{};
   std::condition_variable condition{};
   std::map<uint64_t, FrameRecord> frames{};
+  std::map<uint64_t, PipelineTimingRecord> pipeline_timings{};
+  std::map<uint64_t, AsyncPipelineTimingRecord> async_pipeline_timings{};
+  std::map<uint64_t, TrackerPipelineTimingRecord> tracker_pipeline_timings{};
   bool pipeline_ready{false};
   bool source_complete{false};
   bool source_ok{false};
   uint64_t source_frames{0};
   uint64_t sync_drops{0};
   uint64_t tracker_overwrites{0};
+  bool detector_pipeline_counters_recorded{false};
+  std::array<uint64_t, 10> detector_pipeline_counters{};
   int64_t started_ns{0};
   int64_t source_complete_ns{0};
   int64_t last_event_ns{0};
@@ -227,9 +294,8 @@ inline bool WaitForPipelineReady()
   }
   RunState& state = State();
   std::unique_lock<std::mutex> lock(state.mutex);
-  return state.condition.wait_for(
-      lock, std::chrono::milliseconds(GetConfig().timeout_ms),
-      [&state] { return state.pipeline_ready; });
+  return state.condition.wait_for(lock, std::chrono::milliseconds(GetConfig().timeout_ms),
+                                  [&state] { return state.pipeline_ready; });
 }
 
 inline bool WaitForAimer(uint64_t timestamp_us)
@@ -242,7 +308,8 @@ inline bool WaitForAimer(uint64_t timestamp_us)
   RunState& state = State();
   std::unique_lock<std::mutex> lock(state.mutex);
   return state.condition.wait_for(
-      lock, std::chrono::milliseconds(config.frame_timeout_ms), [&state, timestamp_us]
+      lock, std::chrono::milliseconds(config.frame_timeout_ms),
+      [&state, timestamp_us]
       {
         const auto frame = state.frames.find(timestamp_us);
         return frame != state.frames.end() && frame->second.aimer_output;
@@ -341,6 +408,127 @@ inline void RecordDetector(uint64_t timestamp_us, double preprocess_ms,
               });
 }
 
+inline void RecordPipelineTiming(
+    uint64_t timestamp_us, int64_t slot_acquire_ns, int64_t infer_enqueue_ns,
+    int64_t infer_start_ns, int64_t infer_end_ns, int64_t infer_worker_period_ns,
+    int64_t infer_worker_intercall_gap_ns, int64_t infer_worker_dispatch_gap_ns,
+    int64_t output_enqueue_ns, int64_t output_start_ns, int64_t output_worker_period_ns,
+    int64_t output_end_ns, int64_t post_enqueue_ns, int64_t post_start_ns,
+    int64_t post_worker_period_ns, int64_t post_end_ns, int64_t slot_release_ns,
+    uint32_t slots_busy_before_admission, uint32_t slot_id, uint64_t slot_generation,
+    bool infer_backlog_after_call, uint64_t no_free_count_at_release)
+{
+  if (!Enabled())
+  {
+    return;
+  }
+  const PipelineTimingRecord record{
+      .timestamp_us = timestamp_us,
+      .slot_acquire_ns = slot_acquire_ns,
+      .infer_enqueue_ns = infer_enqueue_ns,
+      .infer_start_ns = infer_start_ns,
+      .infer_end_ns = infer_end_ns,
+      .infer_worker_period_ns = infer_worker_period_ns,
+      .infer_worker_intercall_gap_ns = infer_worker_intercall_gap_ns,
+      .infer_worker_dispatch_gap_ns = infer_worker_dispatch_gap_ns,
+      .output_enqueue_ns = output_enqueue_ns,
+      .output_start_ns = output_start_ns,
+      .output_worker_period_ns = output_worker_period_ns,
+      .output_end_ns = output_end_ns,
+      .post_enqueue_ns = post_enqueue_ns,
+      .post_start_ns = post_start_ns,
+      .post_worker_period_ns = post_worker_period_ns,
+      .post_end_ns = post_end_ns,
+      .slot_release_ns = slot_release_ns,
+      .slots_busy_before_admission = slots_busy_before_admission,
+      .slot_id = slot_id,
+      .slot_generation = slot_generation,
+      .infer_backlog_after_call = infer_backlog_after_call,
+      .no_free_count_at_release = no_free_count_at_release,
+  };
+  RunState& state = State();
+  std::lock_guard<std::mutex> lock(state.pipeline_timing_mutex);
+  state.pipeline_timings[timestamp_us] = record;
+}
+
+inline void RecordAsyncPipelineTiming(
+    uint64_t timestamp_us, uint64_t admission_seq, uint64_t request_id,
+    int64_t infer_submit_ns, int64_t infer_complete_ns, uint64_t completion_seq,
+    uint32_t inflight_before_submit, uint32_t inflight_after_submit,
+    uint32_t inflight_at_complete, uint32_t inflight_high_water_after_submit,
+    bool completion_reordered, int64_t post_enqueue_ns, int64_t post_start_ns,
+    int64_t output_publish_ns, int64_t post_end_ns, uint64_t output_seq,
+    int64_t slot_release_ns)
+{
+  if (!Enabled())
+  {
+    return;
+  }
+  const AsyncPipelineTimingRecord record{
+      .timestamp_us = timestamp_us,
+      .admission_seq = admission_seq,
+      .request_id = request_id,
+      .infer_submit_ns = infer_submit_ns,
+      .infer_complete_ns = infer_complete_ns,
+      .completion_seq = completion_seq,
+      .inflight_before_submit = inflight_before_submit,
+      .inflight_after_submit = inflight_after_submit,
+      .inflight_at_complete = inflight_at_complete,
+      .inflight_high_water_after_submit = inflight_high_water_after_submit,
+      .completion_reordered = completion_reordered,
+      .post_enqueue_ns = post_enqueue_ns,
+      .post_start_ns = post_start_ns,
+      .output_publish_ns = output_publish_ns,
+      .post_end_ns = post_end_ns,
+      .output_seq = output_seq,
+      .slot_release_ns = slot_release_ns,
+  };
+  RunState& state = State();
+  std::lock_guard<std::mutex> lock(state.pipeline_timing_mutex);
+  state.async_pipeline_timings[timestamp_us] = record;
+}
+
+inline std::atomic<uint64_t>& PipelineNoFreeCounter()
+{
+  static std::atomic<uint64_t> count{0U};
+  return count;
+}
+
+inline void RecordPipelineNoFree()
+{
+  if (Enabled())
+  {
+    PipelineNoFreeCounter().fetch_add(1U, std::memory_order_relaxed);
+  }
+}
+
+inline uint64_t PipelineNoFreeCount()
+{
+  if (!Enabled())
+  {
+    return 0U;
+  }
+  return PipelineNoFreeCounter().load(std::memory_order_relaxed);
+}
+
+inline void RecordDetectorPipelineCounters(uint64_t admitted, uint64_t completed,
+                                           uint64_t prepare_drop, uint64_t no_free,
+                                           uint64_t publish_fail, uint64_t unsynced,
+                                           uint64_t claim_miss, uint64_t subscriber_drop,
+                                           uint64_t infer_fail, uint64_t post_fail)
+{
+  if (!Enabled())
+  {
+    return;
+  }
+  RunState& state = State();
+  std::lock_guard<std::mutex> lock(state.mutex);
+  state.detector_pipeline_counters_recorded = true;
+  state.detector_pipeline_counters = {
+      admitted, completed,  prepare_drop,    no_free,    publish_fail,
+      unsynced, claim_miss, subscriber_drop, infer_fail, post_fail};
+}
+
 inline void RecordDetection(uint64_t timestamp_us, DetectionRecord detection)
 {
   UpdateFrame(timestamp_us,
@@ -362,6 +550,45 @@ inline void RecordTrackerQueued(uint64_t timestamp_us, double copy_ms)
                 frame.tracker_queued_ns = now_ns;
                 frame.tracker_copy_ms = copy_ms;
               });
+}
+
+inline void RecordTrackerQueueAdmission(uint64_t timestamp_us,
+                                        uint64_t admission_sequence,
+                                        double producer_wait_ms, bool waited_for_full,
+                                        uint32_t ready_after_commit,
+                                        uint32_t occupied_after_commit,
+                                        uint32_t high_water_after_commit)
+{
+  if (!Enabled())
+  {
+    return;
+  }
+  RunState& state = State();
+  std::lock_guard<std::mutex> lock(state.pipeline_timing_mutex);
+  TrackerPipelineTimingRecord& timing = state.tracker_pipeline_timings[timestamp_us];
+  timing.timestamp_us = timestamp_us;
+  timing.admission_sequence = admission_sequence;
+  timing.producer_wait_ms = producer_wait_ms;
+  timing.waited_for_full = waited_for_full;
+  timing.ready_after_commit = ready_after_commit;
+  timing.occupied_after_commit = occupied_after_commit;
+  timing.high_water_after_commit = high_water_after_commit;
+}
+
+inline void RecordTrackerWorkerService(uint64_t timestamp_us, uint64_t admission_sequence,
+                                       uint64_t worker_sequence, double worker_service_ms)
+{
+  if (!Enabled())
+  {
+    return;
+  }
+  RunState& state = State();
+  std::lock_guard<std::mutex> lock(state.pipeline_timing_mutex);
+  TrackerPipelineTimingRecord& timing = state.tracker_pipeline_timings[timestamp_us];
+  timing.timestamp_us = timestamp_us;
+  timing.admission_sequence = admission_sequence;
+  timing.worker_sequence = worker_sequence;
+  timing.worker_service_ms = worker_service_ms;
 }
 
 inline void RecordTrackerOverwrite()
@@ -517,11 +744,16 @@ inline int WriteArtifacts()
   }
 
   std::map<uint64_t, FrameRecord> frames;
+  std::map<uint64_t, PipelineTimingRecord> pipeline_timings;
+  std::map<uint64_t, AsyncPipelineTimingRecord> async_pipeline_timings;
+  std::map<uint64_t, TrackerPipelineTimingRecord> tracker_pipeline_timings;
   bool source_complete = false;
   bool source_ok = false;
   uint64_t source_frames = 0;
   uint64_t sync_drops = 0;
   uint64_t tracker_overwrites = 0;
+  bool detector_pipeline_counters_recorded = false;
+  std::array<uint64_t, 10> detector_pipeline_counters{};
   int64_t started_ns = 0;
   int64_t source_complete_ns = 0;
   int64_t last_event_ns = 0;
@@ -534,9 +766,18 @@ inline int WriteArtifacts()
     source_frames = state.source_frames;
     sync_drops = state.sync_drops;
     tracker_overwrites = state.tracker_overwrites;
+    detector_pipeline_counters_recorded = state.detector_pipeline_counters_recorded;
+    detector_pipeline_counters = state.detector_pipeline_counters;
     started_ns = state.started_ns;
     source_complete_ns = state.source_complete_ns;
     last_event_ns = state.last_event_ns;
+  }
+  {
+    RunState& state = State();
+    std::lock_guard<std::mutex> lock(state.pipeline_timing_mutex);
+    pipeline_timings = state.pipeline_timings;
+    async_pipeline_timings = state.async_pipeline_timings;
+    tracker_pipeline_timings = state.tracker_pipeline_timings;
   }
 
   const Config& config = GetConfig();
@@ -550,15 +791,24 @@ inline int WriteArtifacts()
   }
 
   std::ofstream frame_output(config.output_dir / "frames.tsv");
+  std::ofstream pipeline_timing_output(config.output_dir / "pipeline_timing.tsv");
+  std::ofstream async_pipeline_timing_output(config.output_dir /
+                                             "async_pipeline_timing.tsv");
+  std::ofstream tracker_pipeline_timing_output(config.output_dir /
+                                               "tracker_pipeline_timing.tsv");
   std::ofstream detection_output(config.output_dir / "detections.tsv");
   std::ofstream summary_output(config.output_dir / "run_summary.tsv");
-  if (!frame_output || !detection_output || !summary_output)
+  if (!frame_output || !pipeline_timing_output || !async_pipeline_timing_output ||
+      !tracker_pipeline_timing_output || !detection_output || !summary_output)
   {
     std::fprintf(stderr, "ReplayBenchmark failed to open output files\n");
     return 3;
   }
 
   frame_output << std::setprecision(12);
+  pipeline_timing_output << std::setprecision(12);
+  async_pipeline_timing_output << std::setprecision(12);
+  tracker_pipeline_timing_output << std::setprecision(12);
   detection_output << std::setprecision(12);
   summary_output << std::setprecision(12);
   frame_output << "timestamp_us\tcapture_read_ms\tcapture_decode_ms\tcapture_commit_ms"
@@ -579,6 +829,98 @@ inline int WriteArtifacts()
                   "\tplan_roll\tplan_roll_velocity\tplan_roll_acceleration\n";
   detection_output << "timestamp_us\tindex\tcolor\ttype\tnumber\tconfidence\tpnp_valid"
                       "\tpnp_error_px\tx0\ty0\tx1\ty1\tx2\ty2\tx3\ty3\ttx\tty\ttz\n";
+  pipeline_timing_output
+      << "timestamp_us\tinfer_queue_wait_ms\tinfer_worker_service_ms"
+         "\tinfer_worker_period_ms\tinfer_worker_intercall_gap_ms"
+         "\tinfer_worker_dispatch_gap_ms\toutput_queue_wait_ms"
+         "\toutput_worker_period_ms\toutput_core_service_ms"
+         "\toutput_worker_service_ms"
+         "\tpost_queue_wait_ms"
+         "\tpost_worker_period_ms\tpost_core_service_ms\tpost_worker_service_ms"
+         "\tslot_release_wait_ms\tslot_pre_infer_hold_ms\tslot_lifetime_ms"
+         "\tslots_busy_before_admission\tinfer_backlog_after_call"
+         "\tslot_id\tslot_generation\tno_free_count_at_release\n";
+  async_pipeline_timing_output
+      << "timestamp_us\tadmission_seq\trequest_id\tinfer_submit_ns"
+         "\tinfer_complete_ns\tcompletion_seq\tinflight_before_submit"
+         "\tinflight_after_submit\tinflight_at_complete"
+         "\tinflight_high_water_after_submit\tcompletion_reordered"
+         "\tpost_enqueue_ns\tpost_start_ns\toutput_publish_ns\tpost_end_ns"
+         "\toutput_seq\tslot_release_ns\n";
+  tracker_pipeline_timing_output
+      << "timestamp_us\tadmission_seq\tworker_seq"
+         "\tproducer_wait_ms\twaited_for_full"
+         "\tready_after_commit\toccupied_after_commit\thigh_water_after_commit"
+         "\tworker_service_ms\n";
+
+  for (const auto& [timestamp_us, timing] : pipeline_timings)
+  {
+    pipeline_timing_output << timestamp_us;
+    const std::array<double, 16> values{
+        DurationMs(timing.infer_enqueue_ns, timing.infer_start_ns),
+        DurationMs(timing.infer_start_ns, timing.infer_end_ns),
+        timing.infer_worker_period_ns > 0
+            ? static_cast<double>(timing.infer_worker_period_ns) / 1000000.0
+            : kNaN,
+        timing.infer_worker_intercall_gap_ns > 0
+            ? static_cast<double>(timing.infer_worker_intercall_gap_ns) / 1000000.0
+            : kNaN,
+        timing.infer_worker_dispatch_gap_ns > 0
+            ? static_cast<double>(timing.infer_worker_dispatch_gap_ns) / 1000000.0
+            : kNaN,
+        DurationMs(timing.output_enqueue_ns, timing.output_start_ns),
+        timing.output_worker_period_ns > 0
+            ? static_cast<double>(timing.output_worker_period_ns) / 1000000.0
+            : kNaN,
+        DurationMs(timing.output_start_ns, timing.output_end_ns),
+        DurationMs(timing.output_start_ns, timing.post_enqueue_ns),
+        DurationMs(timing.post_enqueue_ns, timing.post_start_ns),
+        timing.post_worker_period_ns > 0
+            ? static_cast<double>(timing.post_worker_period_ns) / 1000000.0
+            : kNaN,
+        DurationMs(timing.post_start_ns, timing.post_end_ns),
+        DurationMs(timing.post_start_ns, timing.slot_release_ns),
+        DurationMs(timing.post_end_ns, timing.slot_release_ns),
+        DurationMs(timing.slot_acquire_ns, timing.infer_start_ns),
+        DurationMs(timing.slot_acquire_ns, timing.slot_release_ns),
+    };
+    for (double value : values)
+    {
+      pipeline_timing_output << '\t';
+      WriteNumber(pipeline_timing_output, value);
+    }
+    pipeline_timing_output << '\t' << timing.slots_busy_before_admission << '\t'
+                           << (timing.infer_backlog_after_call ? 1 : 0) << '\t'
+                           << timing.slot_id << '\t' << timing.slot_generation << '\t'
+                           << timing.no_free_count_at_release << '\n';
+  }
+
+  for (const auto& [timestamp_us, timing] : async_pipeline_timings)
+  {
+    async_pipeline_timing_output
+        << timestamp_us << '\t' << timing.admission_seq << '\t' << timing.request_id
+        << '\t' << timing.infer_submit_ns << '\t' << timing.infer_complete_ns << '\t'
+        << timing.completion_seq << '\t' << timing.inflight_before_submit << '\t'
+        << timing.inflight_after_submit << '\t' << timing.inflight_at_complete << '\t'
+        << timing.inflight_high_water_after_submit << '\t'
+        << (timing.completion_reordered ? 1 : 0) << '\t' << timing.post_enqueue_ns << '\t'
+        << timing.post_start_ns << '\t' << timing.output_publish_ns << '\t'
+        << timing.post_end_ns << '\t' << timing.output_seq << '\t'
+        << timing.slot_release_ns << '\n';
+  }
+
+  for (const auto& [timestamp_us, timing] : tracker_pipeline_timings)
+  {
+    tracker_pipeline_timing_output << timestamp_us << '\t' << timing.admission_sequence
+                                   << '\t' << timing.worker_sequence << '\t';
+    WriteNumber(tracker_pipeline_timing_output, timing.producer_wait_ms);
+    tracker_pipeline_timing_output
+        << '\t' << (timing.waited_for_full ? 1 : 0) << '\t' << timing.ready_after_commit
+        << '\t' << timing.occupied_after_commit << '\t' << timing.high_water_after_commit
+        << '\t';
+    WriteNumber(tracker_pipeline_timing_output, timing.worker_service_ms);
+    tracker_pipeline_timing_output << '\n';
+  }
 
   uint64_t capture_count = 0;
   uint64_t sync_count = 0;
@@ -775,7 +1117,13 @@ inline int WriteArtifacts()
                     "\tmpc_output_finite\tmpc_plan_accepted\tnonfinite_outputs"
                     "\tfire_true\tsource_active_ms\tdetector_active_ms"
                     "\ttracker_active_ms\taimer_active_ms\tpipeline_drain_ms"
-                    "\tpipeline_active_ms\tevent_active_ms\n";
+                    "\tpipeline_active_ms\tevent_active_ms"
+                    "\tpipeline_timing_frames\tpipeline_no_free_count"
+                    "\tdetector_pipeline_counters_recorded\tdetector_admitted"
+                    "\tdetector_completed\tdetector_prepare_drop\tdetector_no_free"
+                    "\tdetector_publish_fail\tdetector_unsynced"
+                    "\tdetector_claim_miss\tdetector_subscriber_drop"
+                    "\tdetector_infer_fail\tdetector_post_fail\n";
   summary_output << config.variant << '\t' << config.run_id << '\t'
                  << (functional_ok ? "PASS" : "FAIL") << '\t' << exit_code << '\t'
                  << (config.require_complete_pipeline ? 1 : 0) << '\t'
@@ -801,15 +1149,41 @@ inline int WriteArtifacts()
       summary_output << '\t';
     }
   }
+  summary_output << '\t' << pipeline_timings.size() << '\t' << PipelineNoFreeCount()
+                 << '\t' << (detector_pipeline_counters_recorded ? 1 : 0);
+  for (uint64_t value : detector_pipeline_counters)
+  {
+    summary_output << '\t' << value;
+  }
   summary_output << '\n';
 
   frame_output.close();
+  pipeline_timing_output.close();
+  async_pipeline_timing_output.close();
+  tracker_pipeline_timing_output.close();
   detection_output.close();
   summary_output.close();
+  if (frame_output.fail() || pipeline_timing_output.fail() ||
+      async_pipeline_timing_output.fail() || tracker_pipeline_timing_output.fail() ||
+      detection_output.fail() || summary_output.fail())
+  {
+    std::fprintf(stderr, "ReplayBenchmark failed to write output files\n");
+    return 3;
+  }
 
   std::ofstream sentinel_output(config.output_dir / "complete.sentinel");
+  if (!sentinel_output)
+  {
+    std::fprintf(stderr, "ReplayBenchmark failed to open completion sentinel\n");
+    return 3;
+  }
   sentinel_output << (functional_ok ? "PASS" : "FAIL") << '\t' << exit_code << '\n';
   sentinel_output.close();
+  if (sentinel_output.fail())
+  {
+    std::fprintf(stderr, "ReplayBenchmark failed to write completion sentinel\n");
+    return 3;
+  }
 
   RunState& state = State();
   std::lock_guard<std::mutex> lock(state.mutex);

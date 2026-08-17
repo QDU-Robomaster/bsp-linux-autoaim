@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = ROOT / "User" / "RunConfig"
 MODULES_MANIFEST = ROOT / "Modules" / "modules.yaml"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "build-test.yml"
+REPLAY_BENCHMARK_PATH = ROOT / "User" / "ReplayBenchmark.hpp"
 
 EXPECTED_K = [
     2328.6857198980888,
@@ -77,15 +78,28 @@ EXPECTED_MODULE_PINS = [
     "qdu-future/CameraBase@ff44801075f829e8d1b713b6d4649c24f536649c",
     "qdu-future/HikCamera@74559e55b25fdea16dc81956bedce1545ff4d28a",
     "qdu-future/CaptureFileCamera@fce728ce075a8c10c4d05a69fc5437f97eafc3b9",
-    "qdu-future/CameraSync@933cb82ace248aa4e005444fdb231ec20e2af02e",
-    "qdu-future/CameraFrameSync@eb5c939c0225dab2924714d71daf1e4d701531d0",
+    "qdu-future/CameraSync@554d0c77ce1349aaf72cde0ea4256da274f2b6bf",
+    "qdu-future/CameraFrameSync@dbe56d3dce5e6fbe00ed2c30e4a63136d71bb903",
     "xrobot-org/SharedTopic@489d05938f4b8b24ab950789decb4b43393e8d46",
     "xrobot-org/SharedTopicClient@43365ed2718573f35fe3fdbaadfe4a7565453233",
     "qdu-future/VisionPreview@6e30c7417ab9a92446bde6d8f082796cc7041343",
     "qdu-future/ArmorDetector@efde0d1dbf29a7442fa105ecafe245f2b33a47ea",
     "qdu-future/ArmorTracker@9101af40a0d90d18e4c2a4995205105b7cbe712e",
     "qdu-future/Aimer@14c0dcff11977edeac1420bf549855af43e73f39",
-    "qdu-future/VisionCapture@5ccd3c19cc9a7aca9e1270177e851a1306c20171",
+    "qdu-future/VisionCapture@f9f0ea1732d3712bb10865da57a7fb5cc5198eb6",
+]
+EXPECTED_REPLAY_APIS = [
+    "RecordPipelineTiming",
+    "RecordAsyncPipelineTiming",
+    "RecordPipelineNoFree",
+    "RecordDetectorPipelineCounters",
+    "RecordTrackerQueueAdmission",
+    "RecordTrackerWorkerService",
+]
+EXPECTED_REPLAY_OUTPUTS = [
+    "pipeline_timing.tsv",
+    "async_pipeline_timing.tsv",
+    "tracker_pipeline_timing.tsv",
 ]
 EXPECTED_PRODUCT_CONFIG_SHA256 = {
     "User/xrobot.yaml": "7649f68837d6f983fb2e9a7ef37acc009c2bffa2f991637337a183e0c1b0f0d7",
@@ -172,6 +186,15 @@ def check_integration_contracts():
 
     workflow_text = WORKFLOW_PATH.read_text(encoding="utf-8")
     require("/tmp/calibration-presets" not in workflow_text, "generate-only presets forbidden")
+
+    replay_text = REPLAY_BENCHMARK_PATH.read_text(encoding="utf-8")
+    for api in EXPECTED_REPLAY_APIS:
+        require(f"inline void {api}(" in replay_text, f"missing replay API: {api}")
+    for output_name in EXPECTED_REPLAY_OUTPUTS:
+        require(output_name in replay_text, f"missing replay output: {output_name}")
+    require("inline bool ShouldStop()" in replay_text, "existing replay stop contract")
+    require("inline bool ShouldStop(bool" not in replay_text, "unwired replay drain contract")
+    require("pipeline_drained_at_stop" not in replay_text, "unwired replay drain claim")
 
 
 def module_by_id(config, module_id):
