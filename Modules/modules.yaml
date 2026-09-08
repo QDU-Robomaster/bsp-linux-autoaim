@@ -11,3 +11,5 @@ modules:
 - qdu-future/ArmorTracker
 - qdu-future/Aimer
 - qdu-future/VisionCapture
+- xrobot-org/DurationStatistics
+- qdu-future/Referee
