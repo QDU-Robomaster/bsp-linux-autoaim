@@ -56,7 +56,7 @@ jobs:
           rm -rf "Modules/${module}"
           git clone --depth=1 --recurse-submodules --branch "${ref}" "${url}" "Modules/${module}"
         done </tmp/xrobot_module_clone_list.tsv
-    - name: detect OpenVINO
+    - name: detect optional OpenVINO
       shell: bash
       run: |
         set -euo pipefail
@@ -68,29 +68,26 @@ jobs:
           fi
         done
         if [ -z "$openvino_dir" ]; then
-          echo "OpenVINO runtime CMake directory not found" >&2
-          exit 1
+          echo "OpenVINO not found; continuing without the optional dependency"
         fi
         echo "OPENVINO_DIR=$openvino_dir" >> "$GITHUB_ENV"
-    - name: generate capturefile preset
-      run: xrobot_gen_main --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
-    - name: config cmake capturefile
-      run: >
-        cmake . -Bbuild_capturefile -G Ninja
-        -DOpenVINO_DIR="$OPENVINO_DIR"
-        -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
-        -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
-        -DLIBXR_PRINT_ENABLE_POINTER=ON
-    - name: build capturefile
-      run: cmake --build build_capturefile --target rm_auto_aim
-    - name: generate hik preset
-      run: xrobot_gen_main --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
-    - name: config cmake hik
-      run: >
-        cmake . -Bbuild_hik -G Ninja
-        -DOpenVINO_DIR="$OPENVINO_DIR"
-        -DLIBXR_PRINT_INTEGER_ENABLE_64BIT=ON
-        -DLIBXR_PRINT_FLOAT_ENABLE_DOUBLE=ON
-        -DLIBXR_PRINT_ENABLE_POINTER=ON
-    - name: build hik
-      run: cmake --build build_hik --target rm_auto_aim
+    - name: generate default preset
+      run: xrobot_gen_main --config User/xrobot.yaml --output User/xrobot_main.hpp
+    - name: configure Release
+      shell: bash
+      run: |
+        args=()
+        if [ -n "${OPENVINO_DIR:-}" ]; then
+          args+=("-DOpenVINO_DIR=$OPENVINO_DIR")
+        fi
+        cmake --preset release -DBUILD_TESTING=OFF "${args[@]}"
+    - name: build all existing presets
+      shell: bash
+      run: |
+        set -euo pipefail
+        for preset in default capturefile hik sentry vision_capture; do
+          config="User/RunConfig/${preset}.yaml"
+          if [ "$preset" = default ]; then config="User/xrobot.yaml"; fi
+          xrobot_gen_main --config "$config" --output User/xrobot_main.hpp
+          cmake --build --preset release --target rm_auto_aim -j2
+        done

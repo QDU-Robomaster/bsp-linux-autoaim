@@ -1,15 +1,17 @@
-#include <chrono>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <unistd.h>
+
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <fcntl.h>
-#include <sys/file.h>
-#include <unistd.h>
 
+#include "RefereeTypes.hpp"
 #include "app_framework.hpp"
 #include "libxr.hpp"
 #include "libxr_rw.hpp"
@@ -22,39 +24,6 @@
 #include "thread.hpp"
 #include "xrobot_constexpr.hpp"
 #include "xrobot_main.hpp"
-
-struct [[gnu::packed]] RobotGameRefereeStatus
-{
-  uint8_t robot_id{};
-  uint8_t robot_level{};
-  uint16_t remain_hp{};
-  uint16_t max_hp{};
-  uint16_t shooter_cooling_value{};
-  uint16_t shooter_heat_limit{};
-  uint16_t chassis_power_limit{};
-  uint8_t power_gimbal_output : 1 {};
-  uint8_t power_chassis_output : 1 {};
-  uint8_t power_launcher_output : 1 {};
-};
-
-struct [[gnu::packed]] RobotGameRefereeGame
-{
-  uint8_t game_type : 4 {};
-  uint8_t game_progress : 4 {};
-  uint16_t stage_remain_time{};
-  uint64_t sync_time_stamp{};
-};
-
-struct [[gnu::packed]] RobotGameRefereeSummary
-{
-  RobotGameRefereeStatus robot_status{};
-  RobotGameRefereeGame game_status{};
-  uint8_t reserved_tail[68]{};
-};
-
-static_assert(sizeof(RobotGameRefereeStatus) == 13);
-static_assert(sizeof(RobotGameRefereeGame) == 11);
-static_assert(sizeof(RobotGameRefereeSummary) == 92);
 
 namespace
 {
@@ -179,8 +148,8 @@ int main(int, char **)
 
     static LibXR::Topic::Domain host_domain("host");
     [[maybe_unused]] static LibXR::Topic robot_game_referee_topic =
-        LibXR::Topic::CreateTopic<RobotGameRefereeSummary>("sentry_ref", &host_domain,
-                                                           true);
+        LibXR::Topic::CreateTopic<RefereeTypes::RobotGameRefereePack>(
+            AutoAimRunConfig::RefereeTopicName, &host_domain, true);
   }
 
   XRobotMain(peripherals);
