@@ -1,57 +1,41 @@
 modules:
-  - module: QDU-Robomaster/HikCamera
+  - module: QDU-Robomaster/CaptureFileCamera
     id: camera
     template_args:
-      - 'AutoAimRunConfig::Hik::HikFrameLayout'
+      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
     args:
       - ramfs: ramfs
-      - calibration: 'AutoAimRunConfig::Hik::MainCameraCalibration'
+      - calibration: 'AutoAimRunConfig::CaptureFile::MainCameraCalibration'
       - runtime:
-          - '"gimbal"'  # camera_name
-          - '"camera_image"' # image_topic_name
-          - '"camera_imu"' # imu_topic_name
-          - '16.0F' # gain
-          - 'AutoAimRunConfig::Hik::HikExposureTimeUs' # exposure_time
-          - true # external_trigger
-          - '249.0F' # acquisition_frame_rate
-          - 100 # grab_timeout_ms
-          - 3 # image_node_num
-          - 2 # decimation_horizontal
-          - 2 # decimation_vertical
-          - false # rotate_180
+          - '"./data/camera_internal_recording_20260428/damo_clean.avi"'  # file_path
+          - '""' # frame_csv_path
+          - '"./data/camera_internal_recording_20260428/damo_imu.csv"' # imu_csv_path
+          - '"capturefile_camera"' # camera_name
+          - '"capturefile_image"' # image_topic_name
+          - '"capturefile_imu"' # imu_topic_name
+          - true # realtime
+          - false # loop
+          - 0 # max_frames
+          - 'AutoAimRunConfig::CaptureFile::MainFrameGeometry' # geometry
   - module: QDU-Robomaster/CameraFrameSync
     id: camera_frame_sync
     template_args:
-      - 'AutoAimRunConfig::Hik::HikFrameLayout'
+      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
     args:
       - camera: camera
       - runtime:
-          - 'CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE'  # mode
-          - 'AutoAimRunConfig::Hik::HikSyncOffsetUs' # offset_us
-          - '"host"' # host_topic_domain_name
+          - 'CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::SyncMode::LATEST_IMU'  # mode
+          - 0 # offset_us
+          - '"libxr_def_domain"' # host_topic_domain_name
           - '"camera_sync_command"' # sync_command_topic_name
           - '"camera_sync_result"' # sync_result_topic_name
           - 3 # sync_probe_div
           - 1 # sync_active_level
-          - '100.0F' # target_trigger_hz
-  - module: xrobot-org/SharedTopic
-    id: shared_topic_rx
-    args:
-      - uart: devc_usb
-      - ramfs: ramfs
-      - uart_name: '"DevC-USB"'
-      - buffer_size: 4096
-      - topic_configs:
-          - ['"gimbal_gyro"', '"host"']
-          - ['"gimbal_accl"', '"host"']
-          - ['"gimbal_quat"', '"host"']
-          - ['"camera_sync_result"', '"host"']
-          - ['"robot_game_ref"', '"host"']
-
+          - '50.0F' # target_trigger_hz
   - module: QDU-Robomaster/ArmorDetector
     id: armor_detector
     template_args:
-      - 'AutoAimRunConfig::Hik::HikFrameLayout'
+      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
     args:
       - sync: camera_frame_sync
       - cfg:
@@ -61,10 +45,10 @@ modules:
             min_confidence: 0.1
             enable_quad_check: true
             min_quad_area_px: 16.0
-          referee_auto_detect_color: true
+          referee_auto_detect_color: false
           referee_domain: '"host"'
           preview:
-          # detector 实时预览总开关；false 时不启动预览线程，实机默认关闭。
+          # detector 实时预览总开关；false 时不启动预览线程，CI/回放默认关闭。
             enabled: false
           # OpenCV 窗口名，只影响本模块预览窗口标题。
             preview_window_name: '"armor_detector_preview"'
@@ -87,7 +71,7 @@ modules:
   - module: QDU-Robomaster/ArmorTracker
     id: armor_tracker
     template_args:
-      - 'AutoAimRunConfig::Hik::HikFrameLayout'
+      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
     args:
       - ramfs: ramfs
       - sync: camera_frame_sync
@@ -132,7 +116,7 @@ modules:
               rotation: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]
               translation: [0.041861764663827829, 0.136068364765315, 0.0089956658836358675]
           preview:
-          # tracker 实时预览总开关；false 时不启动预览线程，实机默认关闭。
+          # tracker 实时预览总开关；false 时不启动预览线程，CI/回放默认关闭。
             enabled: false
           # OpenCV 窗口名，只影响本模块预览窗口标题。
             preview_window_name: '"armor_tracker_preview"'
@@ -155,13 +139,13 @@ modules:
   - module: QDU-Robomaster/Aimer
     id: aimer
     template_args:
-      - 'AutoAimRunConfig::Hik::HikFrameLayout'
+      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
     args:
       - cfg:
-          yaw_offset: 0.0
-          roll_offset: 0.6
+          yaw_offset: -1.0
+          roll_offset: -1.4
           yaw_rate_threshold: 2.0
-          default_bullet_speed: 21.7
+          default_bullet_speed: 23.0
           min_valid_bullet_speed: 14.0
           ballistic_drag_k: 0.02
           ballistic_integration_dt_s: 0.001
@@ -173,13 +157,13 @@ modules:
           vision_to_command_delay_s: 0.0
           command_transport_delay_s: 0.0
           gimbal_response_delay_s: 0.0
-          fire_delay_s: 0.05
-          low_speed_extra_predict_s: 0.075
-          high_speed_extra_predict_s: 0.075
-          min_fire_threshold: 0.06
-          max_fire_threshold: 0.48
+          fire_delay_s: 0.0
+          low_speed_extra_predict_s: 0.015
+          high_speed_extra_predict_s: 0.03
+          min_fire_threshold: 0.003
+          max_fire_threshold: 0.05
           enable_mpc_plan: true
-          mpc_fire_thresh: 0.48
+          mpc_fire_thresh: 0.05
           max_yaw_acc: 50.0
           q_yaw_pos: 9000000.0
           q_yaw_vel: 0.0
@@ -202,16 +186,7 @@ modules:
           enable_runtime_log: true
           bullet_speed_log_delta: 0.05
           heat_log_delta: 1.0
-          convert_raw_gimbal_quat_to_body: true
-      - calibration: 'AutoAimRunConfig::Hik::MainCameraCalibration'
-  - module: xrobot-org/SharedTopicClient
-    id: shared_topic_tx
-    args:
-      - uart: devc_usb
-      - slot_count: 256
-      - topic_configs:
-          - ['"target_euler"', '"host"']
-          - ['"fire_notify"', '"host"']
-          - ['"camera_sync_command"', '"host"']
+          convert_raw_gimbal_quat_to_body: false
+      - calibration: 'AutoAimRunConfig::CaptureFile::MainCameraCalibration'
 settings:
   monitor_sleep_ms: '1000'

@@ -6,3 +6,4 @@
 .git/
 .cache/
 **/build/**
+Modules/*/

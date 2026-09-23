@@ -22,40 +22,29 @@ jobs:
     - uses: actions/checkout@v4
     - name: init submodule
       run: git config --global --add safe.directory "$GITHUB_WORKSPACE" && git submodule update --init --recursive
-    - name: install pip packages
-      run: pip install xrobot
+    - name: Checkout matching XRobot tools
+      shell: bash
+      run: |
+        set -euo pipefail
+        selected="${XROBOT_REF:-}"
+        if [[ -z "$selected" ]]; then
+          if [[ -n "$(git ls-remote --heads https://github.com/xrobot-org/XRobot.git "refs/heads/$XR_REF_NAME")" ]]; then
+            selected="refs/heads/$XR_REF_NAME"
+          else
+            selected=refs/heads/dev
+          fi
+        fi
+        git init .ci-tools/XRobot
+        git -C .ci-tools/XRobot remote add origin https://github.com/xrobot-org/XRobot.git
+        git -C .ci-tools/XRobot fetch --depth=1 origin "$selected"
+        git -C .ci-tools/XRobot checkout --detach FETCH_HEAD
+        python3 -m pip install ./.ci-tools/XRobot
     - name: install linux build deps
       run: |
         apt-get update
         apt-get install -y --no-install-recommends libgpiod-dev
-    - name: get modules && setup
-      shell: bash
-      run: |
-        set -euo pipefail
-        python3 - <<'PY' > /tmp/xrobot_module_clone_list.tsv
-        import yaml
-
-        with open("Modules/modules.yaml", "r", encoding="utf-8") as f:
-            modules = yaml.safe_load(f)["modules"]
-
-        for entry in modules:
-            namespace, rest = entry.split("/", 1)
-            if "@" in rest:
-                module, ref = rest.split("@", 1)
-            else:
-                module, ref = rest, "master"
-            if namespace in {"qdu-future", "qdu-robomaster"}:
-                org = "QDU-Robomaster"
-            elif namespace == "xrobot-org":
-                org = "xrobot-org"
-            else:
-                raise SystemExit(f"unknown module namespace: {namespace}")
-            print(f"{module}\thttps://github.com/{org}/{module}.git\t{ref}")
-        PY
-        while IFS=$'\t' read -r module url ref; do
-          rm -rf "Modules/${module}"
-          git clone --depth=1 --recurse-submodules --branch "${ref}" "${url}" "Modules/${module}"
-        done </tmp/xrobot_module_clone_list.tsv
+    - name: Resolve configured modules and generate the hardware entry
+      run: xrobot_setup --context-ref "refs/heads/$XR_REF_NAME" --register-source User/main.cpp
     - name: detect optional OpenVINO
       shell: bash
       run: |
@@ -71,8 +60,6 @@ jobs:
           echo "OpenVINO not found; continuing without the optional dependency"
         fi
         echo "OPENVINO_DIR=$openvino_dir" >> "$GITHUB_ENV"
-    - name: generate default preset
-      run: xrobot_gen_main --config User/xrobot.yaml --output User/xrobot_main.hpp
     - name: configure Release
       shell: bash
       run: |
@@ -81,13 +68,18 @@ jobs:
           args+=("-DOpenVINO_DIR=$OPENVINO_DIR")
         fi
         cmake --preset release -DBUILD_TESTING=OFF "${args[@]}"
-    - name: build all existing presets
+    - name: build replay entry
+      run: |
+        xrobot_gen_main --config User/Replay/xrobot.yaml --output User/Replay/xrobot_main.hpp --register-source User/Replay/main.cpp
+        cmake --build --preset release --target rm_auto_aim_replay -j2
+    - name: build every hardware run config
       shell: bash
       run: |
         set -euo pipefail
-        for preset in default capturefile hik sentry vision_capture; do
-          config="User/RunConfig/${preset}.yaml"
-          if [ "$preset" = default ]; then config="User/xrobot.yaml"; fi
-          xrobot_gen_main --config "$config" --output User/xrobot_main.hpp
+        for config in User/xrobot.yaml User/RunConfig/*.yaml; do
+          xrobot_gen_main --config "$config" --output User/xrobot_main.hpp --register-source User/main.cpp
           cmake --build --preset release --target rm_auto_aim -j2
         done
+    env:
+      XR_REF_NAME: ${{ github.head_ref || github.ref_name }}
+      XROBOT_REF: ${{ vars.XROBOT_REF || '' }}

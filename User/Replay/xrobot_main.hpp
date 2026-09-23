@@ -4,13 +4,11 @@
 #include <type_traits>
 #include <utility>
 #include "thread.hpp"
-#include "HikCamera.hpp"
+#include "CaptureFileCamera.hpp"
 #include "CameraFrameSync.hpp"
-#include "SharedTopic.hpp"
 #include "ArmorDetector.hpp"
 #include "ArmorTracker.hpp"
 #include "Aimer.hpp"
-#include "SharedTopicClient.hpp"
 
 namespace xrobot_generated {
 template <typename...> struct TypeList {};
@@ -48,77 +46,42 @@ template <typename T> inline void Monitor(T& instance) {
 #endif
 
 [[noreturn]] XR_XROBOT_MAIN_INLINE void XRobotMain(
-    LibXR::RamFS& ramfs,
-    LibXR::UART& devc_usb) {
+    LibXR::RamFS& ramfs) {
   // modules[0]: camera
-  static HikCamera<AutoAimRunConfig::Hik::HikFrameLayout> camera(
+  static CaptureFileCamera<AutoAimRunConfig::CaptureFile::MainFrameLayout> camera(
       static_cast<LibXR::RamFS&>(ramfs)
-      , AutoAimRunConfig::Hik::MainCameraCalibration
-      , HikCamera<AutoAimRunConfig::Hik::HikFrameLayout>::RuntimeParam{
-"gimbal"
-, "camera_image"
-, "camera_imu"
-, 16.0F
-, AutoAimRunConfig::Hik::HikExposureTimeUs
+      , AutoAimRunConfig::CaptureFile::MainCameraCalibration
+      , CaptureFileCamera<AutoAimRunConfig::CaptureFile::MainFrameLayout>::RuntimeParam{
+"./data/camera_internal_recording_20260428/damo_clean.avi"
+, ""
+, "./data/camera_internal_recording_20260428/damo_imu.csv"
+, "capturefile_camera"
+, "capturefile_image"
+, "capturefile_imu"
 , true
-, 249.0F
-, 100
-, 3
-, 2
-, 2
 , false
+, 0
+, AutoAimRunConfig::CaptureFile::MainFrameGeometry
 }
   );
   // modules[1]: camera_frame_sync
-  static CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout> camera_frame_sync(
-      static_cast<CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::Base&>(camera)
-      , CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::RuntimeParam{
-CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
-, AutoAimRunConfig::Hik::HikSyncOffsetUs
-, "host"
+  static CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout> camera_frame_sync(
+      static_cast<CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Base&>(camera)
+      , CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::RuntimeParam{
+CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::SyncMode::LATEST_IMU
+, 0
+, "libxr_def_domain"
 , "camera_sync_command"
 , "camera_sync_result"
 , 3
 , 1
-, 100.0F
+, 50.0F
 }
   );
-  static std::initializer_list<SharedTopic::TopicConfig> xr_arg_shared_topic_rx_topic_configs =
-      {
-{
-"gimbal_gyro"
-, "host"
-}
-, {
-"gimbal_accl"
-, "host"
-}
-, {
-"gimbal_quat"
-, "host"
-}
-, {
-"camera_sync_result"
-, "host"
-}
-, {
-"robot_game_ref"
-, "host"
-}
-}
-  ;
-  // modules[2]: shared_topic_rx
-  static SharedTopic shared_topic_rx(
-      static_cast<LibXR::UART&>(devc_usb)
-      , static_cast<LibXR::RamFS&>(ramfs)
-      , "DevC-USB"
-      , 4096
-      , xr_arg_shared_topic_rx_topic_configs
-  );
-  // modules[3]: armor_detector
-  static ArmorDetector<AutoAimRunConfig::Hik::HikFrameLayout> armor_detector(
-      static_cast<ArmorDetector<AutoAimRunConfig::Hik::HikFrameLayout>::Sync&>(camera_frame_sync)
-      , ArmorDetector<AutoAimRunConfig::Hik::HikFrameLayout>::Config{
+  // modules[2]: armor_detector
+  static ArmorDetector<AutoAimRunConfig::CaptureFile::MainFrameLayout> armor_detector(
+      static_cast<ArmorDetector<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Sync&>(camera_frame_sync)
+      , ArmorDetector<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Config{
 .detect_color = 2
 , .network = {
 .model = ArmorDetectorModel::INT16_HEAD_L
@@ -126,7 +89,7 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 , .enable_quad_check = true
 , .min_quad_area_px = 16.0
 }
-, .referee_auto_detect_color = true
+, .referee_auto_detect_color = false
 , .referee_domain = "host"
 , .preview = {
 .enabled = false
@@ -142,11 +105,11 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 }
 }
   );
-  // modules[4]: armor_tracker
-  static ArmorTracker<AutoAimRunConfig::Hik::HikFrameLayout> armor_tracker(
+  // modules[3]: armor_tracker
+  static ArmorTracker<AutoAimRunConfig::CaptureFile::MainFrameLayout> armor_tracker(
       static_cast<LibXR::RamFS&>(ramfs)
-      , static_cast<ArmorTracker<AutoAimRunConfig::Hik::HikFrameLayout>::FrameSync&>(camera_frame_sync)
-      , ArmorTracker<AutoAimRunConfig::Hik::HikFrameLayout>::Config{
+      , static_cast<ArmorTracker<AutoAimRunConfig::CaptureFile::MainFrameLayout>::FrameSync&>(camera_frame_sync)
+      , ArmorTracker<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Config{
 .tracker = {
 .require_target_tag = false
 , .target_tag_id = -1
@@ -199,13 +162,13 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 }
 }
   );
-  // modules[5]: aimer
-  static Aimer<AutoAimRunConfig::Hik::HikFrameLayout> aimer(
-      Aimer<AutoAimRunConfig::Hik::HikFrameLayout>::Config{
-.yaw_offset = 0.0
-, .roll_offset = 0.6
+  // modules[4]: aimer
+  static Aimer<AutoAimRunConfig::CaptureFile::MainFrameLayout> aimer(
+      Aimer<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Config{
+.yaw_offset = -1.0
+, .roll_offset = -1.4
 , .yaw_rate_threshold = 2.0
-, .default_bullet_speed = 21.7
+, .default_bullet_speed = 23.0
 , .min_valid_bullet_speed = 14.0
 , .ballistic_drag_k = 0.02
 , .ballistic_integration_dt_s = 0.001
@@ -217,13 +180,13 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 , .vision_to_command_delay_s = 0.0
 , .command_transport_delay_s = 0.0
 , .gimbal_response_delay_s = 0.0
-, .fire_delay_s = 0.05
-, .low_speed_extra_predict_s = 0.075
-, .high_speed_extra_predict_s = 0.075
-, .min_fire_threshold = 0.06
-, .max_fire_threshold = 0.48
+, .fire_delay_s = 0.0
+, .low_speed_extra_predict_s = 0.015
+, .high_speed_extra_predict_s = 0.03
+, .min_fire_threshold = 0.003
+, .max_fire_threshold = 0.05
 , .enable_mpc_plan = true
-, .mpc_fire_thresh = 0.48
+, .mpc_fire_thresh = 0.05
 , .max_yaw_acc = 50.0
 , .q_yaw_pos = 9000000.0
 , .q_yaw_vel = 0.0
@@ -247,40 +210,16 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 , .enable_runtime_log = true
 , .bullet_speed_log_delta = 0.05
 , .heat_log_delta = 1.0
-, .convert_raw_gimbal_quat_to_body = true
+, .convert_raw_gimbal_quat_to_body = false
 }
-      , AutoAimRunConfig::Hik::MainCameraCalibration
-  );
-  static std::initializer_list<SharedTopicClient::TopicConfig> xr_arg_shared_topic_tx_topic_configs =
-      {
-{
-"target_euler"
-, "host"
-}
-, {
-"fire_notify"
-, "host"
-}
-, {
-"camera_sync_command"
-, "host"
-}
-}
-  ;
-  // modules[6]: shared_topic_tx
-  static SharedTopicClient shared_topic_tx(
-      static_cast<LibXR::UART&>(devc_usb)
-      , 256
-      , xr_arg_shared_topic_tx_topic_configs
+      , AutoAimRunConfig::CaptureFile::MainCameraCalibration
   );
   for (;;) {
     ::xrobot_generated::Monitor(camera);
     ::xrobot_generated::Monitor(camera_frame_sync);
-    ::xrobot_generated::Monitor(shared_topic_rx);
     ::xrobot_generated::Monitor(armor_detector);
     ::xrobot_generated::Monitor(armor_tracker);
     ::xrobot_generated::Monitor(aimer);
-    ::xrobot_generated::Monitor(shared_topic_tx);
     LibXR::Thread::Sleep(1000);
   }
 }
@@ -297,15 +236,9 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
       ::xrobot_generated::RegistrationMatches< \
           std::remove_reference_t<decltype(ramfs)>, __VA_ARGS__>::value, \
       "XR_REGISTER changed; regenerate xrobot_main.hpp")
-#define XR_REGISTER_DETAIL_devc_usb(...) \
-  static_assert(std::is_same<::xrobot_generated::TypeList<__VA_ARGS__>, \
-      ::xrobot_generated::TypeList<LibXR::UART>>::value && \
-      ::xrobot_generated::RegistrationMatches< \
-          std::remove_reference_t<decltype(devc_usb)>, __VA_ARGS__>::value, \
-      "XR_REGISTER changed; regenerate xrobot_main.hpp")
 #define XR_REGISTER(name, ...) XR_REGISTER_DETAIL_##name(__VA_ARGS__)
 
-#define XROBOT_MAIN() ::XRobotMain(ramfs, devc_usb)
+#define XROBOT_MAIN() ::XRobotMain(ramfs)
 
 // NOLINTEND
 // clang-format on

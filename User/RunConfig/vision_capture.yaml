@@ -1,141 +1,102 @@
-global_settings:
-  monitor_sleep_ms: 1000
-
-constexpr_namespace: AutoAimRunConfig
-
-constexpr_includes:
-  - CameraBase.hpp
-
-constexprs:
-  EnableDevCUsb:
-    type: bool
-    value: true
-  HikExposureTimeUs:
-    type: float
-    value: {expr: 2000.0F}
-  HikTriggerDelayUs:
-    type: int
-    value: 75
-  HikSyncOffsetUs:
-    type: int
-    value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
-  MainCameraCalibration:
-    type: CameraTypes::CameraCalibration
-    value:
-      native_width: 1440
-      native_height: 1080
-      camera_matrix: [2328.685719898089, 0.0, 733.3564625092474, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 1.0]
-      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
-      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
-      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-      projection_matrix: [2328.685719898089, 0.0, 733.3564625092474, 0.0, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 0.0, 1.0, 0.0]
-  HikFrameLayout:
-    type: CameraTypes::FrameLayout
-    value:
-      width: 720
-      height: 540
-      step: 2160
-      encoding: {expr: CameraTypes::Encoding::BGR8}
-  RefereeTopicName:
-    type: const char*
-    value: robot_game_ref
-
 modules:
-  - id: camera
-    name: HikCamera
+  - module: QDU-Robomaster/HikCamera
+    id: camera
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      calibration: {constexpr: MainCameraCalibration}
-      runtime:
-        camera_name: gimbal
-        image_topic_name: camera_image
-        imu_topic_name: camera_imu
-        gain: {expr: 16.0F}
-        exposure_time: {constexpr: HikExposureTimeUs}
-        external_trigger: true
-        acquisition_frame_rate: {expr: 249.0F}
-        grab_timeout_ms: 100
-        image_node_num: 3
-        decimation_horizontal: 2
-        decimation_vertical: 2
-        rotate_180: false
-
-  - id: camera_frame_sync
-    name: CameraFrameSync
+      - 'AutoAimRunConfig::VisionCapture::HikFrameLayout'
+    args:
+      - ramfs: ramfs
+      - calibration: 'AutoAimRunConfig::VisionCapture::MainCameraCalibration'
+      - runtime:
+          - '"gimbal"'  # camera_name
+          - '"camera_image"' # image_topic_name
+          - '"camera_imu"' # imu_topic_name
+          - '16.0F' # gain
+          - 'AutoAimRunConfig::VisionCapture::HikExposureTimeUs' # exposure_time
+          - true # external_trigger
+          - '249.0F' # acquisition_frame_rate
+          - 100 # grab_timeout_ms
+          - 3 # image_node_num
+          - 2 # decimation_horizontal
+          - 2 # decimation_vertical
+          - false # rotate_180
+  - module: QDU-Robomaster/CameraFrameSync
+    id: camera_frame_sync
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      camera: '@camera'
-      runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::SyncMode::RAW_PROBE"}
-        offset_us: {constexpr: HikSyncOffsetUs}
-        host_topic_domain_name: host
-        sync_command_topic_name: camera_sync_command
-        sync_result_topic_name: camera_sync_result
-        sync_probe_div: 3
-        sync_active_level: 1
-        target_trigger_hz: {expr: 100.0F}
+      - 'AutoAimRunConfig::VisionCapture::HikFrameLayout'
+    args:
+      - camera: camera
+      - runtime:
+          - 'CameraFrameSync<AutoAimRunConfig::VisionCapture::HikFrameLayout>::SyncMode::RAW_PROBE'  # mode
+          - 'AutoAimRunConfig::VisionCapture::HikSyncOffsetUs' # offset_us
+          - '"host"' # host_topic_domain_name
+          - '"camera_sync_command"' # sync_command_topic_name
+          - '"camera_sync_result"' # sync_result_topic_name
+          - 3 # sync_probe_div
+          - 1 # sync_active_level
+          - '100.0F' # target_trigger_hz
+  - module: xrobot-org/SharedTopic
+    id: shared_topic_rx
+    args:
+      - uart: devc_usb
+      - ramfs: ramfs
+      - uart_name: '"DevC-USB"'
+      - buffer_size: 4096
+      - topic_configs:
+          - ['"gimbal_gyro"', '"host"']
+          - ['"gimbal_accl"', '"host"']
+          - ['"gimbal_quat"', '"host"']
+          - ['"camera_sync_result"', '"host"']
 
-  - id: shared_topic_rx
-    name: SharedTopic
-    constructor_args:
-      uart_name: "DevC-USB"
-      buffer_size: 4096
-      topic_configs:
-        - [gimbal_gyro, host]
-        - [gimbal_accl, host]
-        - [gimbal_quat, host]
-        - [camera_sync_result, host]
+  - module: xrobot-org/SharedTopicClient
+    id: shared_topic_tx
+    args:
+      - uart: devc_usb
+      - slot_count: 256
+      - topic_configs:
+          - ['"camera_sync_command"', '"host"']
 
-  - id: shared_topic_tx
-    name: SharedTopicClient
-    constructor_args:
-      uart_name: "DevC-USB"
-      slot_count: 256
-      topic_configs:
-        - [camera_sync_command, host]
-
-  - id: vision_capture
-    name: VisionCapture
+  - module: QDU-Robomaster/VisionCapture
+    id: vision_capture
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      cfg:
-        mode: record
-        output_dir: runs/vision_capture
-        session_name: hik_capture
-        record:
-          enabled: true
-          image_format: bmp
-          max_fps: 30.0
-          max_frames: 0
-          save_images: true
-          save_metadata: true
-          save_raw_imu: true
-          flush_every_n: 1
-        preview:
-          enabled: true
-          preview_window_name: vision_capture
-          preview_scale: 0.5
-          preview_wait_key_ms: 1
-          queue_capacity: 1
-          output_mode: web
-          web_bind_address: 0.0.0.0
-          web_port: 8080
-          web_stream_name: vision_capture
-          max_fps: 30.0
-        board:
-          type: aruco
-          dictionary: DICT_5X5_100
-          marker_length_m: 0.04
-        camera_calibration:
-          enabled: true
-          marker_size_mm: 25.0
-          cols: 8
-          rows: 6
-          auto_save_views: 120
-        filter:
-          require_synced_imu: true
-          max_image_imu_dt_us: 2000
-      sync: '@camera_frame_sync'
+      - 'AutoAimRunConfig::VisionCapture::HikFrameLayout'
+    args:
+      - sync: camera_frame_sync
+      - cfg:
+          - '"record"'  # mode
+          - '"runs/vision_capture"' # output_dir
+          - '"hik_capture"' # session_name
+          - # record
+            enabled: true
+            image_format: '"bmp"'
+            max_fps: 30.0
+            max_frames: 0
+            save_images: true
+            save_metadata: true
+            save_raw_imu: true
+            flush_every_n: 1
+          - # preview
+            enabled: true
+            preview_window_name: '"vision_capture"'
+            preview_scale: 0.5
+            preview_wait_key_ms: 1
+            queue_capacity: 1
+            output_mode: '"web"'
+            web_bind_address: '"0.0.0.0"'
+            web_port: 8080
+            web_stream_name: '"vision_capture"'
+            max_fps: 30.0
+          - # board
+            type: '"aruco"'
+            dictionary: '"DICT_5X5_100"'
+            marker_length_m: 0.04
+          - # camera_calibration
+            enabled: true
+            marker_size_mm: 25.0
+            cols: 8
+            rows: 6
+            auto_save_views: 120
+          - # filter
+            require_synced_imu: true
+            max_image_imu_dt_us: 2000
+settings:
+  monitor_sleep_ms: '1000'

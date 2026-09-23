@@ -6,8 +6,9 @@ Linux 实物自瞄 BSP，基于 `libxr` / `xrobot` 组织工程。
 
 ```text
 Modules/                  模块目录
-User/                     用户配置和生成入口
-User/RunConfig/           可选运行配置
+User/                     实机入口、共用初始化和运行配置常量
+User/RunConfig/           实机可选运行配置
+User/Replay/              内录回放入口和配置
 libxr/                    libxr submodule
 CMakePresets.json         命令行 CMake preset
 .vscode/                  VS Code Remote SSH 配置
@@ -34,38 +35,44 @@ Modules/
 - `User/RunConfig/vision_capture.yaml`：实机同步采集和标定数据入口，实例化相机、
   同步、SharedTopic 收发和 VisionCapture，不实例化检测、跟踪和 Aimer。同步图像、
   IMU、相机内参和 ArUco 检测预览写到 `runs/vision_capture/hik_capture/`。
-- `User/RunConfig/capturefile.yaml`：使用内录文件验证视觉链路，不依赖 Hik 相机和 C 板，
-  保持录像原始 `1440x1080` 几何。
+- `User/Replay/xrobot.yaml`：回放可执行文件 `rm_auto_aim_replay` 的配置，使用内录文件
+  验证视觉链路，不依赖 Hik 相机和 C 板，保持录像原始 `1440x1080` 几何。
+
+实机配置都连接 DevC USB，由 `rm_auto_aim` 构建；回放不打开 DevC，由
+`rm_auto_aim_replay` 构建。两个可执行文件各自包含同目录下生成的 `xrobot_main.hpp`。
+各配置使用的常量在 `User/run_config.hpp`，按配置分命名空间，YAML 直接引用自己的命名空间。
 
 ## Generate
 
-默认配置：
+实机默认配置和指定运行配置：
 
 ```bash
-python3 -m xrobot.GenerateMain --output User/xrobot_main.hpp
+python3 -m xrobot.GenerateMain --config User/xrobot.yaml --output User/xrobot_main.hpp --register-source User/main.cpp
+python3 -m xrobot.GenerateMain --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp --register-source User/main.cpp
+python3 -m xrobot.GenerateMain --config User/RunConfig/vision_capture.yaml --output User/xrobot_main.hpp --register-source User/main.cpp
 ```
 
-指定运行配置：
+回放：
 
 ```bash
-python3 -m xrobot.GenerateMain --config User/RunConfig/hik.yaml --output User/xrobot_main.hpp
-python3 -m xrobot.GenerateMain --config User/RunConfig/vision_capture.yaml --output User/xrobot_main.hpp
-python3 -m xrobot.GenerateMain --config User/RunConfig/capturefile.yaml --output User/xrobot_main.hpp
+python3 -m xrobot.GenerateMain --config User/Replay/xrobot.yaml --output User/Replay/xrobot_main.hpp --register-source User/Replay/main.cpp
 ```
 
-`User/xrobot_main.hpp` 和 `User/xrobot_constexpr.hpp` 是生成文件。
+`User/xrobot_main.hpp` 和 `User/Replay/xrobot_main.hpp` 是生成文件；`User/run_config.hpp`
+手工维护。
 
 ## Build
 
 ```bash
 cmake -S . -B build/debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build/debug --target rm_auto_aim -j$(nproc)
+cmake --build build/debug --target rm_auto_aim rm_auto_aim_replay -j$(nproc)
 ```
 
 ## Run
 
 ```bash
-./build/debug/rm_auto_aim
+./build/debug/rm_auto_aim          # 实机
+./build/debug/rm_auto_aim_replay   # 内录回放
 ```
 
 ## VS Code

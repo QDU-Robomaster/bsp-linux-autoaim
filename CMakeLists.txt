@@ -27,12 +27,12 @@ set(LIBXR_PRINT_ENABLE_POINTER
 )
 add_subdirectory(libxr)
 
+# Hardware entry (Hik camera + DevC USB) and recorded-frame replay entry. Each
+# includes the xrobot_main.hpp generated next to its own main source.
 add_executable(${PROJECT_NAME} User/main.cpp)
+add_executable(${PROJECT_NAME}_replay User/Replay/main.cpp)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC xr)
-
-target_include_directories(
-  ${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:xr,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/User)
+foreach(_target ${PROJECT_NAME} ${PROJECT_NAME}_replay)
+  target_link_libraries(${_target} PUBLIC xr)
+  target_include_directories(${_target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/User)
+endforeach()
