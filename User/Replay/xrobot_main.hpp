@@ -1,14 +1,19 @@
 #pragma once
+// xrobot-stamp: config=xrobot.yaml sha256=322e065d72c3ccd22817df2cff5abb3445f43a2b6ce6d53da6a6785c50894032
+// xrobot-stamp: lock=../../xrobot.lock sha256=ec47458d4271263753e102adb37c3cb326c07b32092bdbf279b1c9db2b589f7d
+// xrobot-stamp: tool=xrobot 0.3.1
 
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include "libxr.hpp"
 #include "thread.hpp"
 #include "CaptureFileCamera.hpp"
 #include "CameraFrameSync.hpp"
 #include "ArmorDetector.hpp"
 #include "ArmorTracker.hpp"
 #include "Aimer.hpp"
+#include "CameraBase.hpp"
 
 namespace xrobot_generated {
 template <typename...> struct TypeList {};
@@ -17,24 +22,13 @@ struct RegistrationMatches
     : std::bool_constant<(!std::is_reference<Views>::value && ...) &&
                          (std::is_convertible<Source*, Views*>::value && ...)> {};
 
-template <typename> struct MonitorSignature : std::false_type {};
-template <typename T> struct MonitorSignature<void (T::*)()> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() noexcept> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() const> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() const noexcept> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() &> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() & noexcept> : std::true_type {};
-template <typename T, typename = void> struct HasMonitor : std::false_type {};
-template <typename T>
-struct HasMonitor<T, std::void_t<decltype(&T::OnMonitor)>>
-    : MonitorSignature<decltype(&T::OnMonitor)> {};
-
-template <typename T> inline void Monitor(T& instance) {
-  if constexpr (HasMonitor<T>::value) {
-    instance.OnMonitor();
-  }
-}
 }  // namespace xrobot_generated
+
+namespace AutoAimRunConfig {
+inline constexpr CameraTypes::CameraCalibration MainCameraCalibration = {.native_width = 1440, .native_height = 1080, .camera_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 1.0}, .distortion_model = CameraTypes::DistortionModel::PLUMB_BOB, .distortion_coefficients = {-0.09182103918709904, 0.4639907346830205, 0.002609878642637282, 0.0009819586010405485, -0.4751278850310457}, .rectification_matrix = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, .projection_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 0.0, 1.0, 0.0}};
+inline constexpr CameraTypes::FrameLayout MainFrameLayout = {.width = 1440, .height = 1080, .step = 4320, .encoding = CameraTypes::Encoding::BGR8};
+inline constexpr CameraTypes::FrameGeometry MainFrameGeometry = {.width = 1440, .height = 1080, .step = 4320, .roi_offset_x_native = 0, .roi_offset_y_native = 0, .decimation_x = 1, .decimation_y = 1, .flags = CameraTypes::FRAME_GEOMETRY_NONE, .reserved = 0, .sample_phase_x_native = 0.0F, .sample_phase_y_native = 0.0F};
+}  // namespace AutoAimRunConfig
 
 // Force only this entry inline in optimized Clang builds.
 #if defined(__clang__) && defined(__OPTIMIZE__) && !defined(LIBXR_DEBUG_BUILD) && \
@@ -48,49 +42,57 @@ template <typename T> inline void Monitor(T& instance) {
 [[noreturn]] XR_XROBOT_MAIN_INLINE void XRobotMain(
     LibXR::RamFS& ramfs) {
   // modules[0]: camera
-  static CaptureFileCamera<AutoAimRunConfig::CaptureFile::MainFrameLayout> camera(
+  static CaptureFileCamera<AutoAimRunConfig::MainFrameLayout> camera(
       static_cast<LibXR::RamFS&>(ramfs)
-      , AutoAimRunConfig::CaptureFile::MainCameraCalibration
-      , CaptureFileCamera<AutoAimRunConfig::CaptureFile::MainFrameLayout>::RuntimeParam{
-"./data/camera_internal_recording_20260428/damo_clean.avi"
-, ""
-, "./data/camera_internal_recording_20260428/damo_imu.csv"
-, "capturefile_camera"
-, "capturefile_image"
-, "capturefile_imu"
-, true
-, false
-, 0
-, AutoAimRunConfig::CaptureFile::MainFrameGeometry
-}
+      , AutoAimRunConfig::MainCameraCalibration
+      , CaptureFileCamera<AutoAimRunConfig::MainFrameLayout>::RuntimeParam(
+static_cast<std::string_view>("./data/camera_internal_recording_20260428/damo_clean.avi")
+, static_cast<std::string_view>("")
+, static_cast<std::string_view>("./data/camera_internal_recording_20260428/damo_imu.csv")
+, static_cast<std::string_view>("capturefile_camera")
+, static_cast<std::string_view>("capturefile_image")
+, static_cast<std::string_view>("capturefile_imu")
+, static_cast<bool>(true)
+, static_cast<bool>(false)
+, static_cast<uint32_t>(0)
+, static_cast<CaptureFileCamera<AutoAimRunConfig::MainFrameLayout>::FrameGeometry>(AutoAimRunConfig::MainFrameGeometry)
+, static_cast<double>(1.0)
+)
   );
   // modules[1]: camera_frame_sync
-  static CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout> camera_frame_sync(
-      static_cast<CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Base&>(camera)
-      , CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::RuntimeParam{
-CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::SyncMode::LATEST_IMU
-, 0
-, "libxr_def_domain"
-, "camera_sync_command"
-, "camera_sync_result"
-, 3
-, 1
-, 50.0F
-}
+  static CameraFrameSync<AutoAimRunConfig::MainFrameLayout> camera_frame_sync(
+      static_cast<CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::Base&>(camera)
+      , CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RuntimeParam(
+static_cast<CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode>(CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::LATEST_IMU)
+, static_cast<int32_t>(0)
+, static_cast<std::string_view>("libxr_def_domain")
+, static_cast<std::string_view>("camera_sync_command")
+, static_cast<std::string_view>("camera_sync_result")
+, static_cast<uint32_t>(3)
+, static_cast<uint32_t>(1)
+, static_cast<float>(50.0F)
+, static_cast<CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RawImuFrame>(CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RawImuFrame::BODY_X_RIGHT_Y_FORWARD_Z_UP)
+, static_cast<std::string_view>({})
+)
   );
   // modules[2]: armor_detector
-  static ArmorDetector<AutoAimRunConfig::CaptureFile::MainFrameLayout> armor_detector(
-      static_cast<ArmorDetector<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Sync&>(camera_frame_sync)
-      , ArmorDetector<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Config{
+  static ArmorDetector<AutoAimRunConfig::MainFrameLayout> armor_detector(
+      static_cast<ArmorDetector<AutoAimRunConfig::MainFrameLayout>::Sync&>(camera_frame_sync)
+      , ArmorDetector<AutoAimRunConfig::MainFrameLayout>::Config{
 .detect_color = 2
 , .network = {
 .model = ArmorDetectorModel::INT16_HEAD_L
 , .min_confidence = 0.1
 , .enable_quad_check = true
 , .min_quad_area_px = 16.0
+, .logit_threshold = 0.619
+, .nms_threshold = 0.45
+, .bbox_expand = 0.1
+, .max_detections = 128
 }
 , .referee_auto_detect_color = false
 , .referee_domain = "host"
+, .referee_topic = "robot_game_ref"
 , .preview = {
 .enabled = false
 , .preview_window_name = "armor_detector_preview"
@@ -103,13 +105,14 @@ CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::SyncMode::LATES
 , .web_stream_name = "armor_detector"
 , .max_fps = 30.0
 }
+, .number_refine = {}
 }
   );
   // modules[3]: armor_tracker
-  static ArmorTracker<AutoAimRunConfig::CaptureFile::MainFrameLayout> armor_tracker(
+  static ArmorTracker<AutoAimRunConfig::MainFrameLayout> armor_tracker(
       static_cast<LibXR::RamFS&>(ramfs)
-      , static_cast<ArmorTracker<AutoAimRunConfig::CaptureFile::MainFrameLayout>::FrameSync&>(camera_frame_sync)
-      , ArmorTracker<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Config{
+      , static_cast<ArmorTracker<AutoAimRunConfig::MainFrameLayout>::FrameSync&>(camera_frame_sync)
+      , ArmorTracker<AutoAimRunConfig::MainFrameLayout>::Config{
 .tracker = {
 .require_target_tag = false
 , .target_tag_id = -1
@@ -163,8 +166,8 @@ CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::SyncMode::LATES
 }
   );
   // modules[4]: aimer
-  static Aimer<AutoAimRunConfig::CaptureFile::MainFrameLayout> aimer(
-      Aimer<AutoAimRunConfig::CaptureFile::MainFrameLayout>::Config{
+  static Aimer<AutoAimRunConfig::MainFrameLayout> aimer(
+      Aimer<AutoAimRunConfig::MainFrameLayout>::Config{
 .yaw_offset = -1.0
 , .roll_offset = -1.4
 , .yaw_rate_threshold = 2.0
@@ -211,15 +214,21 @@ CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::SyncMode::LATES
 , .bullet_speed_log_delta = 0.05
 , .heat_log_delta = 1.0
 , .convert_raw_gimbal_quat_to_body = false
+, .referee_topic = "robot_game_ref"
 }
-      , AutoAimRunConfig::CaptureFile::MainCameraCalibration
+      , AutoAimRunConfig::MainCameraCalibration
   );
+  static_assert(std::is_void_v<decltype(camera.OnMonitor())>, "camera.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(camera_frame_sync.OnMonitor())>, "camera_frame_sync.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(armor_detector.OnMonitor())>, "armor_detector.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(armor_tracker.OnMonitor())>, "armor_tracker.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(aimer.OnMonitor())>, "aimer.OnMonitor() must return void");
   for (;;) {
-    ::xrobot_generated::Monitor(camera);
-    ::xrobot_generated::Monitor(camera_frame_sync);
-    ::xrobot_generated::Monitor(armor_detector);
-    ::xrobot_generated::Monitor(armor_tracker);
-    ::xrobot_generated::Monitor(aimer);
+    camera.OnMonitor();
+    camera_frame_sync.OnMonitor();
+    armor_detector.OnMonitor();
+    armor_tracker.OnMonitor();
+    aimer.OnMonitor();
     LibXR::Thread::Sleep(1000);
   }
 }

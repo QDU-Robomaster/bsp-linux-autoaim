@@ -1,41 +1,63 @@
+constexpr_namespace: AutoAimRunConfig
+constexpr_includes:
+  - CameraBase.hpp
+constexprs:
+  HikExposureTimeUs:
+    type: float
+    value: '2000.0F'
+  HikTriggerDelayUs:
+    type: int
+    value: '75'
+  HikSyncOffsetUs:
+    type: int
+    value: 'HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)'
+  MainCameraCalibration:
+    type: CameraTypes::CameraCalibration
+    value: '{.native_width = 1440, .native_height = 1080, .camera_matrix = {2348.0610281828863, 0.0, 753.7199990513768, 0.0, 2341.430205137848, 544.3093638576938, 0.0, 0.0, 1.0}, .distortion_model = CameraTypes::DistortionModel::PLUMB_BOB, .distortion_coefficients = {-0.09324913488777978, 0.3089185338125273, 0.0011528970103605383, -0.0010514494107999794, 0.0}, .rectification_matrix = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, .projection_matrix = {2334.0852301109603, 0.0, 753.2190261545588, 0.0, 0.0, 2331.8191930180155, 544.7774518626655, 0.0, 0.0, 0.0, 1.0, 0.0}}'
+  HikFrameLayout:
+    type: CameraTypes::FrameLayout
+    value: '{.width = 720, .height = 540, .step = 2160, .encoding = CameraTypes::Encoding::BGR8}'
 modules:
   - module: QDU-Robomaster/HikCamera
     id: camera
     template_args:
-      - 'AutoAimRunConfig::Sentry::HikFrameLayout'
+      - 'AutoAimRunConfig::HikFrameLayout'
     args:
       - ramfs: ramfs
-      - calibration: 'AutoAimRunConfig::Sentry::MainCameraCalibration'
+      - calibration: 'AutoAimRunConfig::MainCameraCalibration'
       - runtime:
-          - '"gimbal"'  # camera_name
-          - '"camera_image"' # image_topic_name
-          - '"camera_imu"' # imu_topic_name
-          - '16.0F' # gain
-          - 'AutoAimRunConfig::Sentry::HikExposureTimeUs' # exposure_time
-          - false # external_trigger
-          - '124.5F' # acquisition_frame_rate
-          - 100 # grab_timeout_ms
-          - 3 # image_node_num
-          - 2 # decimation_horizontal
-          - 2 # decimation_vertical
-          - false # rotate_180
+          camera_name: '"gimbal"'
+          image_topic_name: '"camera_image"'
+          imu_topic_name: '"camera_imu"'
+          gain: '16.0F'
+          exposure_time: 'AutoAimRunConfig::HikExposureTimeUs'
+          external_trigger: false
+          acquisition_frame_rate: '124.5F'
+          grab_timeout_ms: 100
+          image_node_num: 3
+          decimation_horizontal: 2
+          decimation_vertical: 2
+          rotate_180: false
+          adc_bit_depth: 'std::nullopt'
+          gamma_enabled: 'false'
+          gamma: '1.0F'
   - module: QDU-Robomaster/CameraFrameSync
     id: camera_frame_sync
     template_args:
-      - 'AutoAimRunConfig::Sentry::HikFrameLayout'
+      - 'AutoAimRunConfig::HikFrameLayout'
     args:
       - camera: camera
       - runtime:
-          - 'CameraFrameSync<AutoAimRunConfig::Sentry::HikFrameLayout>::SyncMode::LATEST_IMU'  # mode
-          - 'AutoAimRunConfig::Sentry::HikSyncOffsetUs' # offset_us
-          - '"host"' # host_topic_domain_name
-          - '"camera_sync_command"' # sync_command_topic_name
-          - '"camera_sync_result"' # sync_result_topic_name
-          - 3 # sync_probe_div
-          - 1 # sync_active_level
-          - '100.0F' # target_trigger_hz
-          - 'CameraFrameSync<AutoAimRunConfig::Sentry::HikFrameLayout>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY' # raw_imu_frame
-          - '"ahrs_quaternion"' # raw_quat_topic_name
+          mode: 'CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::SyncMode::LATEST_IMU'
+          offset_us: 'AutoAimRunConfig::HikSyncOffsetUs'
+          host_topic_domain_name: '"host"'
+          sync_command_topic_name: '"camera_sync_command"'
+          sync_result_topic_name: '"camera_sync_result"'
+          legacy_sync_probe_div: 3
+          sync_active_level: 1
+          legacy_target_trigger_hz: '100.0F'
+          raw_imu_frame: 'CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY'
+          raw_quat_topic_name: '"ahrs_quaternion"'
   - module: xrobot-org/SharedTopic
     id: shared_topic_rx
     args:
@@ -51,7 +73,7 @@ modules:
   - module: QDU-Robomaster/ArmorDetector
     id: armor_detector
     template_args:
-      - 'AutoAimRunConfig::Sentry::HikFrameLayout'
+      - 'AutoAimRunConfig::HikFrameLayout'
     args:
       - sync: camera_frame_sync
       - cfg:
@@ -61,8 +83,13 @@ modules:
             min_confidence: 0.1
             enable_quad_check: true
             min_quad_area_px: 16.0
+            logit_threshold: 0.619
+            nms_threshold: 0.45
+            bbox_expand: 0.1
+            max_detections: 128
           referee_auto_detect_color: true
           referee_domain: '"host"'
+          referee_topic: '"robot_game_ref"'
           preview:
             enabled: false
             preview_window_name: '"armor_detector_preview"'
@@ -82,7 +109,7 @@ modules:
   - module: QDU-Robomaster/ArmorTracker
     id: armor_tracker
     template_args:
-      - 'AutoAimRunConfig::Sentry::HikFrameLayout'
+      - 'AutoAimRunConfig::HikFrameLayout'
     args:
       - ramfs: ramfs
       - sync: camera_frame_sync
@@ -126,7 +153,7 @@ modules:
   - module: QDU-Robomaster/Aimer
     id: aimer
     template_args:
-      - 'AutoAimRunConfig::Sentry::HikFrameLayout'
+      - 'AutoAimRunConfig::HikFrameLayout'
     args:
       - cfg:
           yaw_offset: -0.4
@@ -174,7 +201,8 @@ modules:
           bullet_speed_log_delta: 0.05
           heat_log_delta: 1.0
           convert_raw_gimbal_quat_to_body: true
-      - calibration: 'AutoAimRunConfig::Sentry::MainCameraCalibration'
+          referee_topic: '"robot_game_ref"'
+      - calibration: 'AutoAimRunConfig::MainCameraCalibration'
   - module: xrobot-org/SharedTopicClient
     id: shared_topic_tx
     args:

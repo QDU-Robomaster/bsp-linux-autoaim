@@ -1,8 +1,12 @@
 #pragma once
+// xrobot-stamp: config=xrobot.yaml sha256=c686deefc6c88b76e4a54c2d33e88081c5156f34a04244216b2d905e40e4ded6
+// xrobot-stamp: lock=../xrobot.lock sha256=ec47458d4271263753e102adb37c3cb326c07b32092bdbf279b1c9db2b589f7d
+// xrobot-stamp: tool=xrobot 0.3.1
 
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include "libxr.hpp"
 #include "thread.hpp"
 #include "HikCamera.hpp"
 #include "CameraFrameSync.hpp"
@@ -11,6 +15,7 @@
 #include "ArmorTracker.hpp"
 #include "Aimer.hpp"
 #include "SharedTopicClient.hpp"
+#include "CameraBase.hpp"
 
 namespace xrobot_generated {
 template <typename...> struct TypeList {};
@@ -19,24 +24,15 @@ struct RegistrationMatches
     : std::bool_constant<(!std::is_reference<Views>::value && ...) &&
                          (std::is_convertible<Source*, Views*>::value && ...)> {};
 
-template <typename> struct MonitorSignature : std::false_type {};
-template <typename T> struct MonitorSignature<void (T::*)()> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() noexcept> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() const> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() const noexcept> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() &> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() & noexcept> : std::true_type {};
-template <typename T, typename = void> struct HasMonitor : std::false_type {};
-template <typename T>
-struct HasMonitor<T, std::void_t<decltype(&T::OnMonitor)>>
-    : MonitorSignature<decltype(&T::OnMonitor)> {};
-
-template <typename T> inline void Monitor(T& instance) {
-  if constexpr (HasMonitor<T>::value) {
-    instance.OnMonitor();
-  }
-}
 }  // namespace xrobot_generated
+
+namespace AutoAimRunConfig {
+inline constexpr float HikExposureTimeUs = 2000.0F;
+inline constexpr int HikTriggerDelayUs = 75;
+inline constexpr int HikSyncOffsetUs = HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F);
+inline constexpr CameraTypes::CameraCalibration MainCameraCalibration = {.native_width = 1440, .native_height = 1080, .camera_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 1.0}, .distortion_model = CameraTypes::DistortionModel::PLUMB_BOB, .distortion_coefficients = {-0.09182103918709904, 0.4639907346830205, 0.002609878642637282, 0.0009819586010405485, -0.4751278850310457}, .rectification_matrix = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, .projection_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 0.0, 1.0, 0.0}};
+inline constexpr CameraTypes::FrameLayout HikFrameLayout = {.width = 720, .height = 540, .step = 2160, .encoding = CameraTypes::Encoding::BGR8};
+}  // namespace AutoAimRunConfig
 
 // Force only this entry inline in optimized Clang builds.
 #if defined(__clang__) && defined(__OPTIMIZE__) && !defined(LIBXR_DEBUG_BUILD) && \
@@ -51,37 +47,42 @@ template <typename T> inline void Monitor(T& instance) {
     LibXR::RamFS& ramfs,
     LibXR::UART& devc_usb) {
   // modules[0]: camera
-  static HikCamera<AutoAimRunConfig::Hik::HikFrameLayout> camera(
+  static HikCamera<AutoAimRunConfig::HikFrameLayout> camera(
       static_cast<LibXR::RamFS&>(ramfs)
-      , AutoAimRunConfig::Hik::MainCameraCalibration
-      , HikCamera<AutoAimRunConfig::Hik::HikFrameLayout>::RuntimeParam{
-"gimbal"
-, "camera_image"
-, "camera_imu"
-, 16.0F
-, AutoAimRunConfig::Hik::HikExposureTimeUs
-, true
-, 249.0F
-, 100
-, 3
-, 2
-, 2
-, false
-}
+      , AutoAimRunConfig::MainCameraCalibration
+      , HikCamera<AutoAimRunConfig::HikFrameLayout>::RuntimeParam(
+static_cast<std::string_view>("gimbal")
+, static_cast<std::string_view>("camera_image")
+, static_cast<std::string_view>("camera_imu")
+, static_cast<float>(16.0F)
+, static_cast<float>(AutoAimRunConfig::HikExposureTimeUs)
+, static_cast<bool>(true)
+, static_cast<float>(249.0F)
+, static_cast<uint32_t>(100)
+, static_cast<uint32_t>(3)
+, static_cast<uint32_t>(2)
+, static_cast<uint32_t>(2)
+, static_cast<bool>(false)
+, static_cast<std::optional<HikCamera<AutoAimRunConfig::HikFrameLayout>::AdcBitDepth>>(std::nullopt)
+, static_cast<bool>(false)
+, static_cast<float>(1.0F)
+)
   );
   // modules[1]: camera_frame_sync
-  static CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout> camera_frame_sync(
-      static_cast<CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::Base&>(camera)
-      , CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::RuntimeParam{
-CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
-, AutoAimRunConfig::Hik::HikSyncOffsetUs
-, "host"
-, "camera_sync_command"
-, "camera_sync_result"
-, 3
-, 1
-, 100.0F
-}
+  static CameraFrameSync<AutoAimRunConfig::HikFrameLayout> camera_frame_sync(
+      static_cast<CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::Base&>(camera)
+      , CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RuntimeParam(
+static_cast<CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::SyncMode>(CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::SyncMode::RAW_PROBE)
+, static_cast<int32_t>(AutoAimRunConfig::HikSyncOffsetUs)
+, static_cast<std::string_view>("host")
+, static_cast<std::string_view>("camera_sync_command")
+, static_cast<std::string_view>("camera_sync_result")
+, static_cast<uint32_t>(3)
+, static_cast<uint32_t>(1)
+, static_cast<float>(100.0F)
+, static_cast<CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RawImuFrame>(CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RawImuFrame::BODY_X_RIGHT_Y_FORWARD_Z_UP)
+, static_cast<std::string_view>({})
+)
   );
   static std::initializer_list<SharedTopic::TopicConfig> xr_arg_shared_topic_rx_topic_configs =
       {
@@ -116,18 +117,23 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
       , xr_arg_shared_topic_rx_topic_configs
   );
   // modules[3]: armor_detector
-  static ArmorDetector<AutoAimRunConfig::Hik::HikFrameLayout> armor_detector(
-      static_cast<ArmorDetector<AutoAimRunConfig::Hik::HikFrameLayout>::Sync&>(camera_frame_sync)
-      , ArmorDetector<AutoAimRunConfig::Hik::HikFrameLayout>::Config{
+  static ArmorDetector<AutoAimRunConfig::HikFrameLayout> armor_detector(
+      static_cast<ArmorDetector<AutoAimRunConfig::HikFrameLayout>::Sync&>(camera_frame_sync)
+      , ArmorDetector<AutoAimRunConfig::HikFrameLayout>::Config{
 .detect_color = 2
 , .network = {
 .model = ArmorDetectorModel::INT16_HEAD_L
 , .min_confidence = 0.1
 , .enable_quad_check = true
 , .min_quad_area_px = 16.0
+, .logit_threshold = 0.619
+, .nms_threshold = 0.45
+, .bbox_expand = 0.1
+, .max_detections = 128
 }
 , .referee_auto_detect_color = true
 , .referee_domain = "host"
+, .referee_topic = "robot_game_ref"
 , .preview = {
 .enabled = false
 , .preview_window_name = "armor_detector_preview"
@@ -140,13 +146,14 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 , .web_stream_name = "armor_detector"
 , .max_fps = 30.0
 }
+, .number_refine = {}
 }
   );
   // modules[4]: armor_tracker
-  static ArmorTracker<AutoAimRunConfig::Hik::HikFrameLayout> armor_tracker(
+  static ArmorTracker<AutoAimRunConfig::HikFrameLayout> armor_tracker(
       static_cast<LibXR::RamFS&>(ramfs)
-      , static_cast<ArmorTracker<AutoAimRunConfig::Hik::HikFrameLayout>::FrameSync&>(camera_frame_sync)
-      , ArmorTracker<AutoAimRunConfig::Hik::HikFrameLayout>::Config{
+      , static_cast<ArmorTracker<AutoAimRunConfig::HikFrameLayout>::FrameSync&>(camera_frame_sync)
+      , ArmorTracker<AutoAimRunConfig::HikFrameLayout>::Config{
 .tracker = {
 .require_target_tag = false
 , .target_tag_id = -1
@@ -200,8 +207,8 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 }
   );
   // modules[5]: aimer
-  static Aimer<AutoAimRunConfig::Hik::HikFrameLayout> aimer(
-      Aimer<AutoAimRunConfig::Hik::HikFrameLayout>::Config{
+  static Aimer<AutoAimRunConfig::HikFrameLayout> aimer(
+      Aimer<AutoAimRunConfig::HikFrameLayout>::Config{
 .yaw_offset = 0.0
 , .roll_offset = 0.6
 , .yaw_rate_threshold = 2.0
@@ -248,8 +255,9 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
 , .bullet_speed_log_delta = 0.05
 , .heat_log_delta = 1.0
 , .convert_raw_gimbal_quat_to_body = true
+, .referee_topic = "robot_game_ref"
 }
-      , AutoAimRunConfig::Hik::MainCameraCalibration
+      , AutoAimRunConfig::MainCameraCalibration
   );
   static std::initializer_list<SharedTopicClient::TopicConfig> xr_arg_shared_topic_tx_topic_configs =
       {
@@ -273,14 +281,21 @@ CameraFrameSync<AutoAimRunConfig::Hik::HikFrameLayout>::SyncMode::RAW_PROBE
       , 256
       , xr_arg_shared_topic_tx_topic_configs
   );
+  static_assert(std::is_void_v<decltype(camera.OnMonitor())>, "camera.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(camera_frame_sync.OnMonitor())>, "camera_frame_sync.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(shared_topic_rx.OnMonitor())>, "shared_topic_rx.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(armor_detector.OnMonitor())>, "armor_detector.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(armor_tracker.OnMonitor())>, "armor_tracker.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(aimer.OnMonitor())>, "aimer.OnMonitor() must return void");
+  static_assert(std::is_void_v<decltype(shared_topic_tx.OnMonitor())>, "shared_topic_tx.OnMonitor() must return void");
   for (;;) {
-    ::xrobot_generated::Monitor(camera);
-    ::xrobot_generated::Monitor(camera_frame_sync);
-    ::xrobot_generated::Monitor(shared_topic_rx);
-    ::xrobot_generated::Monitor(armor_detector);
-    ::xrobot_generated::Monitor(armor_tracker);
-    ::xrobot_generated::Monitor(aimer);
-    ::xrobot_generated::Monitor(shared_topic_tx);
+    camera.OnMonitor();
+    camera_frame_sync.OnMonitor();
+    shared_topic_rx.OnMonitor();
+    armor_detector.OnMonitor();
+    armor_tracker.OnMonitor();
+    aimer.OnMonitor();
+    shared_topic_tx.OnMonitor();
     LibXR::Thread::Sleep(1000);
   }
 }

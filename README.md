@@ -40,7 +40,7 @@ Modules/
 
 实机配置都连接 DevC USB，由 `rm_auto_aim` 构建；回放不打开 DevC，由
 `rm_auto_aim_replay` 构建。两个可执行文件各自包含同目录下生成的 `xrobot_main.hpp`。
-各配置使用的常量在 `User/run_config.hpp`，按配置分命名空间，YAML 直接引用自己的命名空间。
+各配置用到的常量写在该配置自己的 `constexprs` 段，生成到 `xrobot_main.hpp` 的 `AutoAimRunConfig` 命名空间。
 
 ## Generate
 
@@ -58,8 +58,7 @@ python3 -m xrobot.GenerateMain --config User/RunConfig/vision_capture.yaml --out
 python3 -m xrobot.GenerateMain --config User/Replay/xrobot.yaml --output User/Replay/xrobot_main.hpp --register-source User/Replay/main.cpp
 ```
 
-`User/xrobot_main.hpp` 和 `User/Replay/xrobot_main.hpp` 是生成文件；`User/run_config.hpp`
-手工维护。
+`User/xrobot_main.hpp` 和 `User/Replay/xrobot_main.hpp` 是生成文件。
 
 ## Build
 

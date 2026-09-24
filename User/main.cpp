@@ -4,7 +4,6 @@
 #include "Referee.hpp"
 #include "bsp_common.hpp"
 #include "linux_uart.hpp"
-#include "run_config.hpp"
 #include "xrobot_main.hpp"
 
 int main(int, char **)

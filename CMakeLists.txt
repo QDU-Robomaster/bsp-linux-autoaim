@@ -12,6 +12,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # libxr
 set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules)
+# Both generated entries are stamp-checked before building.
+set(XROBOT_MAIN_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/xrobot_main.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/User/Replay/xrobot_main.hpp
+)
 set(LIBXR_LOG_OUTPUT_LEVEL 2)
 set(LIBXR_PRINT_INTEGER_ENABLE_64BIT
     ON

@@ -2,7 +2,6 @@
 // User/Replay/xrobot.yaml into User/Replay/xrobot_main.hpp.
 
 #include "bsp_common.hpp"
-#include "run_config.hpp"
 #include "xrobot_main.hpp"
 
 int main(int, char **)

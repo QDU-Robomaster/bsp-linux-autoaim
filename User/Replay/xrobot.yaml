@@ -1,41 +1,57 @@
+constexpr_namespace: AutoAimRunConfig
+constexpr_includes:
+  - CameraBase.hpp
+constexprs:
+  MainCameraCalibration:
+    type: CameraTypes::CameraCalibration
+    value: '{.native_width = 1440, .native_height = 1080, .camera_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 1.0}, .distortion_model = CameraTypes::DistortionModel::PLUMB_BOB, .distortion_coefficients = {-0.09182103918709904, 0.4639907346830205, 0.002609878642637282, 0.0009819586010405485, -0.4751278850310457}, .rectification_matrix = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, .projection_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 0.0, 1.0, 0.0}}'
+  MainFrameLayout:
+    type: CameraTypes::FrameLayout
+    value: '{.width = 1440, .height = 1080, .step = 4320, .encoding = CameraTypes::Encoding::BGR8}'
+  MainFrameGeometry:
+    type: CameraTypes::FrameGeometry
+    value: '{.width = 1440, .height = 1080, .step = 4320, .roi_offset_x_native = 0, .roi_offset_y_native = 0, .decimation_x = 1, .decimation_y = 1, .flags = CameraTypes::FRAME_GEOMETRY_NONE, .reserved = 0, .sample_phase_x_native = 0.0F, .sample_phase_y_native = 0.0F}'
 modules:
   - module: QDU-Robomaster/CaptureFileCamera
     id: camera
     template_args:
-      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
+      - 'AutoAimRunConfig::MainFrameLayout'
     args:
       - ramfs: ramfs
-      - calibration: 'AutoAimRunConfig::CaptureFile::MainCameraCalibration'
+      - calibration: 'AutoAimRunConfig::MainCameraCalibration'
       - runtime:
-          - '"./data/camera_internal_recording_20260428/damo_clean.avi"'  # file_path
-          - '""' # frame_csv_path
-          - '"./data/camera_internal_recording_20260428/damo_imu.csv"' # imu_csv_path
-          - '"capturefile_camera"' # camera_name
-          - '"capturefile_image"' # image_topic_name
-          - '"capturefile_imu"' # imu_topic_name
-          - true # realtime
-          - false # loop
-          - 0 # max_frames
-          - 'AutoAimRunConfig::CaptureFile::MainFrameGeometry' # geometry
+          file_path_in: '"./data/camera_internal_recording_20260428/damo_clean.avi"'
+          frame_csv_path_in: '""'
+          imu_csv_path_in: '"./data/camera_internal_recording_20260428/damo_imu.csv"'
+          camera_name_in: '"capturefile_camera"'
+          image_topic_name_in: '"capturefile_image"'
+          imu_topic_name_in: '"capturefile_imu"'
+          realtime_in: true
+          loop_in: false
+          max_frames_in: 0
+          geometry_in: 'AutoAimRunConfig::MainFrameGeometry'
+          replay_speed_in: '1.0'
   - module: QDU-Robomaster/CameraFrameSync
     id: camera_frame_sync
     template_args:
-      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
+      - 'AutoAimRunConfig::MainFrameLayout'
     args:
       - camera: camera
       - runtime:
-          - 'CameraFrameSync<AutoAimRunConfig::CaptureFile::MainFrameLayout>::SyncMode::LATEST_IMU'  # mode
-          - 0 # offset_us
-          - '"libxr_def_domain"' # host_topic_domain_name
-          - '"camera_sync_command"' # sync_command_topic_name
-          - '"camera_sync_result"' # sync_result_topic_name
-          - 3 # sync_probe_div
-          - 1 # sync_active_level
-          - '50.0F' # target_trigger_hz
+          mode: 'CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode::LATEST_IMU'
+          offset_us: 0
+          host_topic_domain_name: '"libxr_def_domain"'
+          sync_command_topic_name: '"camera_sync_command"'
+          sync_result_topic_name: '"camera_sync_result"'
+          legacy_sync_probe_div: 3
+          sync_active_level: 1
+          legacy_target_trigger_hz: '50.0F'
+          raw_imu_frame: 'CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RawImuFrame::BODY_X_RIGHT_Y_FORWARD_Z_UP'
+          raw_quat_topic_name: '{}'
   - module: QDU-Robomaster/ArmorDetector
     id: armor_detector
     template_args:
-      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
+      - 'AutoAimRunConfig::MainFrameLayout'
     args:
       - sync: camera_frame_sync
       - cfg:
@@ -45,8 +61,13 @@ modules:
             min_confidence: 0.1
             enable_quad_check: true
             min_quad_area_px: 16.0
+            logit_threshold: 0.619
+            nms_threshold: 0.45
+            bbox_expand: 0.1
+            max_detections: 128
           referee_auto_detect_color: false
           referee_domain: '"host"'
+          referee_topic: '"robot_game_ref"'
           preview:
           # detector 实时预览总开关；false 时不启动预览线程，CI/回放默认关闭。
             enabled: false
@@ -68,10 +89,11 @@ modules:
             web_stream_name: '"armor_detector"'
           # 预览最大接受帧率；<= 0 表示不限频。
             max_fps: 30.0
+          number_refine: '{}'
   - module: QDU-Robomaster/ArmorTracker
     id: armor_tracker
     template_args:
-      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
+      - 'AutoAimRunConfig::MainFrameLayout'
     args:
       - ramfs: ramfs
       - sync: camera_frame_sync
@@ -139,7 +161,7 @@ modules:
   - module: QDU-Robomaster/Aimer
     id: aimer
     template_args:
-      - 'AutoAimRunConfig::CaptureFile::MainFrameLayout'
+      - 'AutoAimRunConfig::MainFrameLayout'
     args:
       - cfg:
           yaw_offset: -1.0
@@ -187,6 +209,7 @@ modules:
           bullet_speed_log_delta: 0.05
           heat_log_delta: 1.0
           convert_raw_gimbal_quat_to_body: false
-      - calibration: 'AutoAimRunConfig::CaptureFile::MainCameraCalibration'
+          referee_topic: '"robot_game_ref"'
+      - calibration: 'AutoAimRunConfig::MainCameraCalibration'
 settings:
   monitor_sleep_ms: '1000'
