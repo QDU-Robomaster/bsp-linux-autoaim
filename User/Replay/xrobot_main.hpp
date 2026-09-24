@@ -72,7 +72,7 @@ static_cast<CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::SyncMode>(Camera
 , static_cast<uint32_t>(1)
 , static_cast<float>(50.0F)
 , static_cast<CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RawImuFrame>(CameraFrameSync<AutoAimRunConfig::MainFrameLayout>::RawImuFrame::BODY_X_RIGHT_Y_FORWARD_Z_UP)
-, static_cast<std::string_view>({})
+, std::remove_cv_t<std::remove_reference_t<std::string_view>>{}
 )
   );
   // modules[2]: armor_detector

@@ -81,7 +81,7 @@ static_cast<CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::SyncMode>(CameraF
 , static_cast<uint32_t>(1)
 , static_cast<float>(100.0F)
 , static_cast<CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RawImuFrame>(CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RawImuFrame::BODY_X_RIGHT_Y_FORWARD_Z_UP)
-, static_cast<std::string_view>({})
+, std::remove_cv_t<std::remove_reference_t<std::string_view>>{}
 )
   );
   static std::initializer_list<SharedTopic::TopicConfig> xr_arg_shared_topic_rx_topic_configs =
