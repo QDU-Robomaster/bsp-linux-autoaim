@@ -62,14 +62,8 @@ inline int AcquireBspLock()
 }
 
 inline void WriteLogFile(bool, LibXR::Topic, LibXR::MicrosecondTimestamp timestamp,
-                         LibXR::RawData &log_data)
+                         const LibXR::LogData &log)
 {
-  auto log = reinterpret_cast<LibXR::LogData *>(log_data.addr_);
-  if (log == nullptr)
-  {
-    return;
-  }
-
   if (LibXR::STDIO::write_ && LibXR::STDIO::write_->Writable())
   {
     using clock = std::chrono::system_clock;
@@ -94,9 +88,9 @@ inline void WriteLogFile(bool, LibXR::Topic, LibXR::MicrosecondTimestamp timesta
     {
       const uint32_t timestamp_ms =
           static_cast<uint32_t>(static_cast<uint64_t>(timestamp) / 1000U);
-      f << FileLogLevelName(log->level) << " [" << timestamp_ms << "]("
-        << (log->file ? log->file : "?") << ':' << log->line << ") "
-        << log->message << '\n';
+      f << FileLogLevelName(log.level) << " [" << timestamp_ms << "]("
+        << (log.file ? log.file : "?") << ':' << log.line << ") " << log.message
+        << '\n';
       f.flush();
     }
   }
