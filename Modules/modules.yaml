@@ -1,15 +1,12 @@
+xrobot: 1.0.0
 modules:
-- QDU-Robomaster/CameraBase@same-or-dev
-- QDU-Robomaster/HikCamera@same-or-dev
-- QDU-Robomaster/CaptureFileCamera@same-or-dev
-- QDU-Robomaster/CameraSync@same-or-dev
-- QDU-Robomaster/CameraFrameSync@same-or-dev
-- xrobot-org/SharedTopic@same-or-dev
-- xrobot-org/SharedTopicClient@same-or-dev
-- QDU-Robomaster/VisionPreview@same-or-dev
-- QDU-Robomaster/ArmorDetector@same-or-dev
-- QDU-Robomaster/ArmorTracker@same-or-dev
-- QDU-Robomaster/Aimer@same-or-dev
-- QDU-Robomaster/VisionCapture@same-or-dev
-- xrobot-org/DurationStatistics@same-or-dev
-- QDU-Robomaster/Referee@same-or-dev
+  - QDU-Robomaster/HikCamera@same-or-dev
+  - QDU-Robomaster/CameraFrameSync@same-or-dev
+  - xrobot-org/SharedTopic@same-or-dev
+  - xrobot-org/SharedTopicClient@same-or-dev
+  - QDU-Robomaster/ArmorDetector@same-or-dev
+  - QDU-Robomaster/ArmorTracker@same-or-dev
+  - QDU-Robomaster/Aimer@same-or-dev
+  - QDU-Robomaster/VisionCapture@same-or-dev
+  # User/main.cpp uses RefereeTypes.hpp directly (see README).
+  - QDU-Robomaster/Referee@same-or-dev
