@@ -53,11 +53,11 @@ modules:
           host_topic_domain_name: '"host"'
           sync_command_topic_name: '"camera_sync_command"'
           sync_result_topic_name: '"camera_sync_result"'
-          legacy_sync_probe_div: 3
           sync_active_level: 1
-          legacy_target_trigger_hz: '100.0F'
+          camera_settle_us: 10000U
           raw_imu_frame: 'CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RawImuFrame::X_FORWARD_Y_LEFT_Z_UP_TO_BODY'
           raw_quat_topic_name: '"ahrs_quaternion"'
+          synced_frame_topic_name: '{}'
   - module: xrobot-org/SharedTopic
     id: shared_topic_rx
     args:
