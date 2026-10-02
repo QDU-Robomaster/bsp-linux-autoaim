@@ -36,8 +36,8 @@ cmake --build --preset debug --target rm_auto_aim
 ./build/debug/rm_auto_aim
 ```
 
-构建前 LibXR 会检查 `User/xrobot_main.hpp` 是否比配置、lock、入口和模块头文件新；
-过期时构建失败并提示对应的 `xrobot gen -c <配置>` 命令。
+构建前 LibXR 检查配置、lock、模块头文件和入口源文件中的注册在生成 `User/xrobot_main.hpp`
+之后是否有改动，有改动时构建失败并提示对应的 `xrobot gen -c <配置>` 命令。
 
 ## 产品配置
 
