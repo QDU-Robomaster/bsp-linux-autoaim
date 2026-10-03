@@ -24,97 +24,97 @@ modules:
     repo: https://github.com/QDU-Robomaster/Aimer.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 526c46c2cc5dfc257cd5d8e394df3888e610a572
   QDU-Robomaster/ArmorDetector:
     repo: https://github.com/QDU-Robomaster/ArmorDetector.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 487e3c0ad5cbd93e85e93efcf6404a02c3f6e13e
   QDU-Robomaster/ArmorTracker:
     repo: https://github.com/QDU-Robomaster/ArmorTracker.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 6e4247a16443329a64398c094a2dfe2b668a1dd2
   QDU-Robomaster/CMD:
     repo: https://github.com/QDU-Robomaster/CMD.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: de75d238def422100da5ff588c3d13c261efe0a6
   QDU-Robomaster/CameraBase:
     repo: https://github.com/QDU-Robomaster/CameraBase.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 27627f48e5061c9c7cfe52f85353add6dee56bf4
   QDU-Robomaster/CameraFrameSync:
     repo: https://github.com/QDU-Robomaster/CameraFrameSync.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 208e8171178e0aee73e63ca685c38ab47ea977fd
   QDU-Robomaster/CameraSync:
     repo: https://github.com/QDU-Robomaster/CameraSync.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 55070a63ce07b190efd2a2419b6fb8b142cae2e7
   QDU-Robomaster/HikCamera:
     repo: https://github.com/QDU-Robomaster/HikCamera.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: a66797b89b6ea551650a80168f33dce09c33e7a3
   QDU-Robomaster/Referee:
     repo: https://github.com/QDU-Robomaster/Referee.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 8d3fb4f22bb2740d9d30375b9c9719e9d747ef36
   QDU-Robomaster/VisionCapture:
     repo: https://github.com/QDU-Robomaster/VisionCapture.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 20c98e9cda9a4f4be4bfc43dbd246f0bb3fff520
   QDU-Robomaster/VisionPreview:
     repo: https://github.com/QDU-Robomaster/VisionPreview.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 8d4562898e16b1f5057fb8c79fcfb8bc8c8bba82
   xrobot-org/DurationStatistics:
     repo: https://github.com/xrobot-org/DurationStatistics.git
     source: https://xrobot.work/xrobot-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: f583a8a12d5c9a8809727ecfdea1a247ca745ef7
   xrobot-org/SharedTopic:
     repo: https://github.com/xrobot-org/SharedTopic.git
     source: https://xrobot.work/xrobot-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 42729a987dec7427cb997875ce0e679ccb5226d3
   xrobot-org/SharedTopicClient:
     repo: https://github.com/xrobot-org/SharedTopicClient.git
     source: https://xrobot.work/xrobot-modules/index.yaml
     requested: same-or-dev
-    resolved_ref: feat/static-assembly-20260915
+    resolved_ref: dev
     ref_kind: branch
     commit: 3499578e9c604db94d8990a4f3dbf0a4a88d9d51
