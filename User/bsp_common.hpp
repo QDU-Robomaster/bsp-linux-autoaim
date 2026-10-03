@@ -20,7 +20,7 @@
 #include "terminal.hpp"
 #include "thread.hpp"
 
-// Process setup shared by the hardware and replay executables.
+// Process setup of the autoaim executable: platform, single-instance lock, terminal, file log.
 namespace AutoAimBsp
 {
 inline const char *FileLogLevelName(LibXR::LogLevel level)
@@ -77,7 +77,7 @@ inline void WriteLogFile(bool, LibXR::Topic, LibXR::MicrosecondTimestamp timesta
       localtime_r(&t, &tm);
 
       std::ostringstream oss;
-      // 首次打开时按启动时间命名：YYYYMMDD_HHMMSS.log
+      // The file is named after the first log time: YYYYMMDD_HHMMSS.log
       oss << std::put_time(&tm, "%Y%m%d_%H%M%S") << ".log";
       f.open(oss.str(), std::ios::out | std::ios::app);
 
@@ -100,7 +100,10 @@ inline void WriteLogFile(bool, LibXR::Topic, LibXR::MicrosecondTimestamp timesta
  * @brief 初始化平台、单实例锁、终端线程和文件日志。
  *        Initialize the platform, single-instance lock, terminal and file log.
  *
- * @return false when another autoaim process already holds the lock.
+ * @param ramfs 终端使用的 RamFS。
+ *              RamFS used by the terminal.
+ * @return 单实例锁已被其他 autoaim 进程持有时返回 false，否则返回 true。
+ *         false when another autoaim process already holds the lock, otherwise true.
  */
 inline bool Init(LibXR::RamFS &ramfs)
 {
