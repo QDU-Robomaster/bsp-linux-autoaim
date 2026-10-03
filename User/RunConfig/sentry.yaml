@@ -137,6 +137,7 @@ modules:
               switch_margin: 0.25
           extrinsic:
             camera_mount_to_body:
+              # 安装方向四元数 (w, x, y, z) / mounting rotation quaternion (w, x, y, z)
               rotation: [1.0, 0.0, 0.0, 0.0]
               translation: [0.0, 0.115, 0.05]
           preview:
