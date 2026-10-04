@@ -14,7 +14,7 @@ int main(int, char **)
     return 1;
   }
 
-  static LibXR::LinuxUART devc_usb("16d0", "1492", 115200, LibXR::UART::Parity::NO_PARITY,
+  static LibXR::LinuxUART devc_usb("1d50", "6199", 115200, LibXR::UART::Parity::NO_PARITY,
                                    8, 1, 80, 8192);
 
   // SharedTopic only looks received topics up by name, so the typed referee
