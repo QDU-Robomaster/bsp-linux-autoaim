@@ -2,22 +2,40 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Linux: Debug capturefile replay",
+            "name": "Linux: Debug default hardware",
             "type": "gdb",
             "request": "launch",
             "target": "${workspaceFolder}/build/debug/rm_auto_aim",
             "cwd": "${workspaceFolder}",
             "valuesFormatting": "parseText",
-            "preLaunchTask": "Build: capturefile debug"
+            "preLaunchTask": "Build: default debug"
         },
         {
-            "name": "Linux: Debug Hik hardware",
+            "name": "Linux: Debug hik hardware",
             "type": "gdb",
             "request": "launch",
             "target": "${workspaceFolder}/build/debug/rm_auto_aim",
             "cwd": "${workspaceFolder}",
             "valuesFormatting": "parseText",
             "preLaunchTask": "Build: hik debug"
+        },
+        {
+            "name": "Linux: Debug sentry hardware",
+            "type": "gdb",
+            "request": "launch",
+            "target": "${workspaceFolder}/build/debug/rm_auto_aim",
+            "cwd": "${workspaceFolder}",
+            "valuesFormatting": "parseText",
+            "preLaunchTask": "Build: sentry debug"
+        },
+        {
+            "name": "Linux: Debug vision_capture hardware",
+            "type": "gdb",
+            "request": "launch",
+            "target": "${workspaceFolder}/build/debug/rm_auto_aim",
+            "cwd": "${workspaceFolder}",
+            "valuesFormatting": "parseText",
+            "preLaunchTask": "Build: vision_capture debug"
         }
     ]
 }

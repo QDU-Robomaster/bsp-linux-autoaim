@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19)
 project(rm_auto_aim)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -27,12 +27,8 @@ set(LIBXR_PRINT_ENABLE_POINTER
 )
 add_subdirectory(libxr)
 
+# Hardware entry: Hik camera and the DevC USB link. User/xrobot_main.hpp is
+# generated for the selected product (xrobot gen -c <config>).
 add_executable(${PROJECT_NAME} User/main.cpp)
-
 target_link_libraries(${PROJECT_NAME} PUBLIC xr)
-
-target_include_directories(
-  ${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:xr,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/User)
