@@ -40,10 +40,6 @@ jobs:
         else
           python3 -m pip install "xrobot==$pin"
         fi
-    - name: Install Linux build dependencies
-      run: |
-        apt-get update
-        apt-get install -y --no-install-recommends libgpiod-dev
     - name: Check config layout
       run: xrobot format --check
     - name: Resolve locked Modules and check every config
