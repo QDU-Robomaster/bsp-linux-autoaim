@@ -1,15 +1,17 @@
-name: build test
+name: build
 
 on:
   push:
-    branches:
-      - main
-      - master
-      - "codex/**"
+    branches: [main, master, dev]
+    tags: ['v*']
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [main, master, dev]
+  workflow_dispatch:
+
+env:
+  XR_CONTEXT_REF: ${{ github.ref_type == 'tag' && format('refs/tags/{0}', github.ref_name) || format('refs/heads/{0}', github.head_ref || github.ref_name) }}
+  # The line this build targets: the PR base branch, or the pushed branch/tag.
+  XR_RELEASE_REF: ${{ github.base_ref && format('refs/heads/{0}', github.base_ref) || (github.ref_type == 'tag' && format('refs/tags/{0}', github.ref_name) || format('refs/heads/{0}', github.ref_name)) }}
 
 jobs:
   build:
@@ -17,46 +19,36 @@ jobs:
     container:
       image: ghcr.io/xrobot-org/docker-image-webots:main
       options: --user 0
-
     steps:
-    - uses: actions/checkout@v4
-    - name: init submodule
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+    - name: Init submodules
       run: git config --global --add safe.directory "$GITHUB_WORKSPACE" && git submodule update --init --recursive
-    - name: install pip packages
-      run: pip install xrobot
-    - name: install linux build deps
-      run: |
-        apt-get update
-        apt-get install -y --no-install-recommends libgpiod-dev
-    - name: get modules && setup
+    - name: Install the pinned XRobot tool
       shell: bash
       run: |
         set -euo pipefail
-        python3 - <<'PY' > /tmp/xrobot_module_clone_list.tsv
-        import yaml
-
-        with open("Modules/modules.yaml", "r", encoding="utf-8") as f:
-            modules = yaml.safe_load(f)["modules"]
-
-        for entry in modules:
-            namespace, rest = entry.split("/", 1)
-            if "@" in rest:
-                module, ref = rest.split("@", 1)
-            else:
-                module, ref = rest, "master"
-            if namespace in {"qdu-future", "qdu-robomaster"}:
-                org = "QDU-Robomaster"
-            elif namespace == "xrobot-org":
-                org = "xrobot-org"
-            else:
-                raise SystemExit(f"unknown module namespace: {namespace}")
-            print(f"{module}\thttps://github.com/{org}/{module}.git\t{ref}")
-        PY
-        while IFS=$'\t' read -r module url ref; do
-          rm -rf "Modules/${module}"
-          git clone --depth=1 --recurse-submodules --branch "${ref}" "${url}" "Modules/${module}"
-        done </tmp/xrobot_module_clone_list.tsv
-    - name: detect optional OpenVINO
+        pin=$(python3 -c 'import yaml; print((yaml.safe_load(open("Modules/modules.yaml")) or {}).get("xrobot") or "")')
+        if [[ -z "$pin" ]]; then
+          echo "::error::Pin xrobot in Modules/modules.yaml"
+          exit 1
+        fi
+        if [[ "$pin" =~ ^[0-9a-f]{40}$ ]]; then
+          python3 -m pip install "git+https://github.com/xrobot-org/XRobot.git@$pin"
+        else
+          python3 -m pip install "xrobot==$pin"
+        fi
+    - name: Install Linux build dependencies
+      run: |
+        apt-get update
+        apt-get install -y --no-install-recommends libgpiod-dev
+    - name: Check config layout
+      run: xrobot format --check
+    - name: Resolve locked Modules and check every config
+      run: xrobot setup --frozen --context-ref "$XR_CONTEXT_REF" --release-ref "$XR_RELEASE_REF"
+    - name: Detect OpenVINO
       shell: bash
       run: |
         set -euo pipefail
@@ -71,9 +63,7 @@ jobs:
           echo "OpenVINO not found; continuing without the optional dependency"
         fi
         echo "OPENVINO_DIR=$openvino_dir" >> "$GITHUB_ENV"
-    - name: generate default preset
-      run: xrobot_gen_main --config User/xrobot.yaml --output User/xrobot_main.hpp
-    - name: configure Release
+    - name: Configure
       shell: bash
       run: |
         args=()
@@ -81,13 +71,11 @@ jobs:
           args+=("-DOpenVINO_DIR=$OPENVINO_DIR")
         fi
         cmake --preset release -DBUILD_TESTING=OFF "${args[@]}"
-    - name: build all existing presets
+    - name: Build every product
       shell: bash
       run: |
         set -euo pipefail
-        for preset in default capturefile hik sentry vision_capture; do
-          config="User/RunConfig/${preset}.yaml"
-          if [ "$preset" = default ]; then config="User/xrobot.yaml"; fi
-          xrobot_gen_main --config "$config" --output User/xrobot_main.hpp
+        for config in User/xrobot.yaml User/RunConfig/*.yaml; do
+          xrobot gen -c "$config"
           cmake --build --preset release --target rm_auto_aim -j2
         done

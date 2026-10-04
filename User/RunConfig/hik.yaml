@@ -1,266 +1,249 @@
-global_settings:
-  monitor_sleep_ms: 1000
-
 constexpr_namespace: AutoAimRunConfig
-
 constexpr_includes:
   - CameraBase.hpp
-
 constexprs:
-  EnableDevCUsb:
-    type: bool
-    value: true
   HikExposureTimeUs:
     type: float
-    value: {expr: 2000.0F}
+    value: 2000.0F
   HikTriggerDelayUs:
     type: int
     value: 75
   HikSyncOffsetUs:
     type: int
-    value: {expr: "HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)"}
+    value: HikTriggerDelayUs + static_cast<int>(HikExposureTimeUs * 0.5F)
   MainCameraCalibration:
     type: CameraTypes::CameraCalibration
-    value:
-      native_width: 1440
-      native_height: 1080
-      camera_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 1.0]
-      distortion_model: {expr: CameraTypes::DistortionModel::PLUMB_BOB}
-      distortion_coefficients: [-0.091821039187099038, 0.46399073468302049, 0.0026098786426372819, 0.0009819586010405485, -0.47512788503104569]
-      rectification_matrix: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
-      projection_matrix: [2328.6857198980888, 0.0, 733.35646250924742, 0.0, 0.0, 2328.6701077899961, 540.61872869227727, 0.0, 0.0, 0.0, 1.0, 0.0]
-  MainFrameLayout:
-    type: CameraTypes::FrameLayout
-    value:
-      width: 1440
-      height: 1080
-      step: 4320
-      encoding: {expr: CameraTypes::Encoding::BGR8}
+    value: '{.native_width = 1440, .native_height = 1080, .camera_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 1.0}, .distortion_model = CameraTypes::DistortionModel::PLUMB_BOB, .distortion_coefficients = {-0.09182103918709904, 0.4639907346830205, 0.002609878642637282, 0.0009819586010405485, -0.4751278850310457}, .rectification_matrix = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}, .projection_matrix = {2328.685719898089, 0.0, 733.3564625092474, 0.0, 0.0, 2328.670107789996, 540.6187286922773, 0.0, 0.0, 0.0, 1.0, 0.0}}'
   HikFrameLayout:
     type: CameraTypes::FrameLayout
-    value:
-      width: 720
-      height: 540
-      step: 2160
-      encoding: {expr: CameraTypes::Encoding::BGR8}
-  RefereeTopicName:
-    type: const char*
-    value: robot_game_ref
-
+    value: '{.width = 720, .height = 540, .step = 2160, .encoding = CameraTypes::Encoding::BGR8}'
 modules:
-  - id: camera
-    name: HikCamera
+  - module: QDU-Robomaster/HikCamera
+    id: camera
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      calibration: {constexpr: MainCameraCalibration}
-      runtime:
-        camera_name: gimbal
-        image_topic_name: camera_image
-        imu_topic_name: camera_imu
-        gain: {expr: 16.0F}
-        exposure_time: {constexpr: HikExposureTimeUs}
-        external_trigger: true
-        acquisition_frame_rate: {expr: 249.0F}
-        grab_timeout_ms: 100
-        image_node_num: 3
-        decimation_horizontal: 2
-        decimation_vertical: 2
-        rotate_180: false
-
-  - id: camera_frame_sync
-    name: CameraFrameSync
+      - AutoAimRunConfig::HikFrameLayout
+    args:
+      - ramfs: ramfs
+      - calibration: AutoAimRunConfig::MainCameraCalibration
+      - runtime:
+          camera_name: "gimbal"
+          image_topic_name: "camera_image"
+          imu_topic_name: "camera_imu"
+          gain: 16.0F
+          exposure_time: AutoAimRunConfig::HikExposureTimeUs
+          external_trigger: true
+          acquisition_frame_rate: 249.0F
+          grab_timeout_ms: 100
+          image_node_num: 3
+          decimation_horizontal: 2
+          decimation_vertical: 2
+          rotate_180: false
+          adc_bit_depth: std::nullopt
+          gamma_enabled: false
+          gamma: 1.0F
+  - module: QDU-Robomaster/CameraFrameSync
+    id: camera_frame_sync
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      camera: '@camera'
-      runtime:
-        mode: {expr: "CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::SyncMode::RAW_PROBE"}
-        offset_us: {constexpr: HikSyncOffsetUs}
-        host_topic_domain_name: host
-        sync_command_topic_name: camera_sync_command
-        sync_result_topic_name: camera_sync_result
-        sync_probe_div: 3
-        sync_active_level: 1
-        target_trigger_hz: {expr: 100.0F}
+      - AutoAimRunConfig::HikFrameLayout
+    args:
+      - camera: camera
+      - runtime:
+          mode: CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::SyncMode::RAW_PROBE
+          offset_us: AutoAimRunConfig::HikSyncOffsetUs
+          host_topic_domain_name: "host"
+          sync_command_topic_name: "camera_sync_command"
+          sync_result_topic_name: "camera_sync_result"
+          sync_active_level: 1
+          camera_settle_us: 10000U
+          raw_imu_frame: CameraFrameSync<AutoAimRunConfig::HikFrameLayout>::RawImuFrame::BODY_X_RIGHT_Y_FORWARD_Z_UP
+          raw_quat_topic_name: '{}'
+          synced_frame_topic_name: '{}'
+  - module: xrobot-org/SharedTopic
+    id: shared_topic_rx
+    args:
+      - uart: devc_usb
+      - ramfs: ramfs
+      - uart_name: "DevC-USB"
+      - buffer_size: 4096
+      - topic_configs:
+          - ["gimbal_gyro", "host"]
+          - ["gimbal_accl", "host"]
+          - ["gimbal_quat", "host"]
+          - ["camera_sync_result", "host"]
+          - ["robot_game_ref", "host"]
 
-  - id: shared_topic_rx
-    name: SharedTopic
-    constructor_args:
-      uart_name: "DevC-USB"
-      buffer_size: 4096
-      topic_configs:
-        - [gimbal_gyro, host]
-        - [gimbal_accl, host]
-        - [gimbal_quat, host]
-        - [camera_sync_result, host]
-        - [robot_game_ref, host]
-
-  - id: armor_detector
-    name: ArmorDetector
+  - module: QDU-Robomaster/ArmorDetector
+    id: armor_detector
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      cfg:
-        detect_color: 2
-        network:
-          model: {expr: ArmorDetectorModel::INT16_HEAD_L}
-          min_confidence: 0.1
-          enable_quad_check: true
-          min_quad_area_px: 16.0
-        referee_auto_detect_color: true
-        referee_domain: host
-        referee_topic: {constexpr: RefereeTopicName}
-        preview:
-          # detector 实时预览总开关；false 时不启动预览线程，实机默认关闭。
-          enabled: false
-          # OpenCV 窗口名，只影响本模块预览窗口标题。
-          preview_window_name: armor_detector_preview
-          # 显示缩放比例，只影响本模块预览画面。
-          preview_scale: 0.5
-          # cv::waitKey 事件轮询时间，单位 ms。
-          preview_wait_key_ms: 1
-          # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
-          queue_capacity: 1
-          # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
-          output_mode: window
-          # Web 监听地址；0.0.0.0 表示允许局域网访问。
-          web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
-          web_port: 8080
-          # Web stream 名；直接取流路径 /stream/armor_detector。
-          web_stream_name: armor_detector
-          # 预览最大接受帧率；<= 0 表示不限频。
-          max_fps: 30.0
-      sync: '@camera_frame_sync'
-
-  - id: armor_tracker
-    name: ArmorTracker
+      - AutoAimRunConfig::HikFrameLayout
+    args:
+      - sync: camera_frame_sync
+      - cfg:
+          detect_color: 2
+          network:
+            model: ArmorDetectorModel::INT16_HEAD_L
+            min_confidence: 0.1
+            enable_quad_check: true
+            min_quad_area_px: 16.0
+            logit_threshold: 0.619
+            nms_threshold: 0.45
+            bbox_expand: 0.1
+            max_detections: 128
+          referee_auto_detect_color: true
+          referee_domain: "host"
+          referee_topic: "robot_game_ref"
+          preview:
+            # detector 实时预览总开关；false 时不启动预览线程。
+            enabled: false
+            # OpenCV 预览窗口名。
+            preview_window_name: "armor_detector_preview"
+            # 预览画面的缩放比例。
+            preview_scale: 0.5
+            # cv::waitKey 事件轮询时间，单位 ms。
+            preview_wait_key_ms: 1
+            # 预览队列长度；队列已满时丢弃等待中的帧。
+            queue_capacity: 1
+            # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
+            output_mode: "window"
+            # Web 监听地址；0.0.0.0 表示监听所有网络接口。
+            web_bind_address: "0.0.0.0"
+            # Web 监听端口。
+            web_port: 8080
+            # Web stream 名；取流路径为 /stream/armor_detector。
+            web_stream_name: "armor_detector"
+            # 预览最大接受帧率；<= 0 为无帧率上限。
+            max_fps: 30.0
+          number_refine: '{}'
+  - module: QDU-Robomaster/ArmorTracker
+    id: armor_tracker
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      cfg:
-        tracker:
-          require_target_tag: false
-          target_tag_id: -1
-          min_detect_count: 2
-          max_temp_lost_count: 15
-          outpost_max_temp_lost_count: 75
-          target_select:
-            # 多车选择中，近期可见装甲数量的权重。
-            observed_count_weight: 1.6
-            # 多车选择中，目标距离越近得分越高；实车默认提高该项权重。
-            distance_weight: 2.0
-            # 多车选择中，图像装甲面积越大得分越高。
-            area_weight: 1.2
-            # 多车选择中，自旋越快得分越低。
-            spin_weight: 0.8
-            # 多车选择中，目标越接近当前视轴得分越高；实车默认提高该项权重。
-            angle_weight: 2.0
-            # 距离评分满分对应的最大距离，单位 m。
-            max_distance_m: 8.0
-            # 距离评分从满分降到 0 的距离跨度，单位 m。
-            distance_span_m: 7.5
-            # 面积评分归一化像素面积。
-            area_norm_px: 6000.0
-            # 观测数量评分归一化数量。
-            observed_count_norm: 4.0
-            # 自旋评分归一化角速度，单位 rad/s。
-            max_spin_rad_s: 8.0
-            # 视轴角差评分归一化距离，使用归一化图像坐标。
-            max_angle_norm: 0.5
-            # detecting 状态的目标选择分数倍率。
-            detecting_scale: 0.55
-            # temp_lost 状态的目标选择分数倍率。
-            temp_lost_scale: 0.35
-            # 当前目标切换到更高分目标所需的最小分差。
-            switch_margin: 0.25
-        extrinsic:
-          camera_mount_to_body:
-            rotation: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]
-            translation: [0.041861764663827829, 0.136068364765315, 0.0089956658836358675]
-        preview:
-          # tracker 实时预览总开关；false 时不启动预览线程，实机默认关闭。
-          enabled: false
-          # OpenCV 窗口名，只影响本模块预览窗口标题。
-          preview_window_name: armor_tracker_preview
-          # 显示缩放比例，只影响窗口画面，不改变 tracker 输入图像。
-          preview_scale: 0.5
-          # cv::waitKey 事件轮询时间，单位 ms。
-          preview_wait_key_ms: 1
-          # 预览队列长度；处理不过来时丢旧帧，不反压主链路。
-          queue_capacity: 1
-          # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
-          output_mode: window
-          # Web 监听地址；0.0.0.0 表示允许局域网访问。
-          web_bind_address: 0.0.0.0
-          # Web 监听端口；浏览器访问 http://<上位机IP>:8080/。
-          web_port: 8080
-          # Web stream 名；直接取流路径 /stream/armor_tracker。
-          web_stream_name: armor_tracker
-          # 预览最大接受帧率；<= 0 表示不限频。
-          max_fps: 30.0
-      sync: '@camera_frame_sync'
-  - id: aimer
-    name: Aimer
+      - AutoAimRunConfig::HikFrameLayout
+    args:
+      - ramfs: ramfs
+      - sync: camera_frame_sync
+      - cfg:
+          tracker:
+            require_target_tag: false
+            target_tag_id: -1
+            min_detect_count: 2
+            max_temp_lost_count: 15
+            outpost_max_temp_lost_count: 75
+            target_select:
+              # 多车选择中，近期可见装甲数量的权重。
+              observed_count_weight: 1.6
+              # 多车选择中，目标距离越近得分越高。
+              distance_weight: 2.0
+              # 多车选择中，图像装甲面积越大得分越高。
+              area_weight: 1.2
+              # 多车选择中，自旋越快得分越低。
+              spin_weight: 0.8
+              # 多车选择中，目标越接近当前视轴得分越高。
+              angle_weight: 2.0
+              # 距离评分满分对应的最大距离，单位 m。
+              max_distance_m: 8.0
+              # 距离评分从满分降到 0 的距离跨度，单位 m。
+              distance_span_m: 7.5
+              # 面积评分归一化像素面积。
+              area_norm_px: 6000.0
+              # 观测数量评分归一化数量。
+              observed_count_norm: 4.0
+              # 自旋评分归一化角速度，单位 rad/s。
+              max_spin_rad_s: 8.0
+              # 视轴角差评分归一化距离，使用归一化图像坐标。
+              max_angle_norm: 0.5
+              # detecting 状态的目标选择分数倍率。
+              detecting_scale: 0.55
+              # temp_lost 状态的目标选择分数倍率。
+              temp_lost_scale: 0.35
+              # 当前目标切换到更高分目标所需的最小分差。
+              switch_margin: 0.25
+          extrinsic:
+            camera_mount_to_body:
+              # 安装方向四元数 (w, x, y, z) / mounting rotation quaternion (w, x, y, z)
+              rotation: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]
+              translation: [0.041861764663827829, 0.136068364765315, 0.0089956658836358675]
+          preview:
+            # tracker 实时预览总开关；false 时不启动预览线程。
+            enabled: false
+            # OpenCV 预览窗口名。
+            preview_window_name: "armor_tracker_preview"
+            # 预览画面的缩放比例。
+            preview_scale: 0.5
+            # cv::waitKey 事件轮询时间，单位 ms。
+            preview_wait_key_ms: 1
+            # 预览队列长度；队列已满时丢弃等待中的帧。
+            queue_capacity: 1
+            # 输出模式：window 使用 OpenCV 窗口；raw/web/http/bmp 使用未压缩 BMP 推流。
+            output_mode: "window"
+            # Web 监听地址；0.0.0.0 表示监听所有网络接口。
+            web_bind_address: "0.0.0.0"
+            # Web 监听端口。
+            web_port: 8080
+            # Web stream 名；取流路径为 /stream/armor_tracker。
+            web_stream_name: "armor_tracker"
+            # 预览最大接受帧率；<= 0 为无帧率上限。
+            max_fps: 30.0
+  - module: QDU-Robomaster/Aimer
+    id: aimer
     template_args:
-      Layout: {constexpr: HikFrameLayout}
-    constructor_args:
-      cfg:
-        yaw_offset: -0.4
-        roll_offset: -1.6
-        yaw_rate_threshold: 2.0
-        default_bullet_speed: 23.0
-        min_valid_bullet_speed: 14.0
-        ballistic_drag_k: 0.02
-        ballistic_integration_dt_s: 0.001
-        ballistic_max_iterations: 16
-        ballistic_min_elevation_deg: -20.0
-        ballistic_max_elevation_deg: 35.0
-        auto_fire: true
-        image_to_now_s: 0.0
-        vision_to_command_delay_s: 0.0
-        command_transport_delay_s: 0.0
-        gimbal_response_delay_s: 0.0
-        fire_delay_s: 0.05
-        low_speed_extra_predict_s: 0.075
-        high_speed_extra_predict_s: 0.075
-        min_fire_threshold: 0.06
-        max_fire_threshold: 0.48
-        enable_mpc_plan: true
-        mpc_fire_thresh: 0.48
-        max_yaw_acc: 50.0
-        q_yaw_pos: 9000000.0
-        q_yaw_vel: 0.0
-        r_yaw_acc: 1.0
-        max_roll_acc: 100.0
-        q_roll_pos: 9000000.0
-        q_roll_vel: 0.0
-        r_roll_acc: 1.0
-        preview:
-          enabled: false
-          preview_window_name: aimer_preview
-          preview_scale: 0.5
-          preview_wait_key_ms: 1
-          queue_capacity: 1
-          output_mode: window
-          web_bind_address: 0.0.0.0
-          web_port: 8080
-          web_stream_name: aimer_preview
-          max_fps: 30.0
-        enable_runtime_log: true
-        bullet_speed_log_delta: 0.05
-        heat_log_delta: 1.0
-        convert_raw_gimbal_quat_to_body: true
-        referee_topic: {constexpr: RefereeTopicName}
-      calibration: {constexpr: MainCameraCalibration}
-
-  - id: shared_topic_tx
-    name: SharedTopicClient
-    constructor_args:
-      uart_name: "DevC-USB"
-      slot_count: 256
-      topic_configs:
-        - [target_euler, host]
-        - [fire_notify, host]
-        - [camera_sync_command, host]
+      - AutoAimRunConfig::HikFrameLayout
+    args:
+      - cfg:
+          yaw_offset: -0.4
+          roll_offset: -1.6
+          yaw_rate_threshold: 2.0
+          default_bullet_speed: 23.0
+          min_valid_bullet_speed: 14.0
+          ballistic_drag_k: 0.02
+          ballistic_integration_dt_s: 0.001
+          ballistic_max_iterations: 16
+          ballistic_min_elevation_deg: -20.0
+          ballistic_max_elevation_deg: 35.0
+          auto_fire: true
+          image_to_now_s: 0.0
+          vision_to_command_delay_s: 0.0
+          command_transport_delay_s: 0.0
+          gimbal_response_delay_s: 0.0
+          fire_delay_s: 0.05
+          low_speed_extra_predict_s: 0.075
+          high_speed_extra_predict_s: 0.075
+          min_fire_threshold: 0.06
+          max_fire_threshold: 0.48
+          enable_mpc_plan: true
+          mpc_fire_thresh: 0.48
+          max_yaw_acc: 50.0
+          q_yaw_pos: 9000000.0
+          q_yaw_vel: 0.0
+          r_yaw_acc: 1.0
+          max_roll_acc: 100.0
+          q_roll_pos: 9000000.0
+          q_roll_vel: 0.0
+          r_roll_acc: 1.0
+          preview:
+            enabled: false
+            preview_window_name: "aimer_preview"
+            preview_scale: 0.5
+            preview_wait_key_ms: 1
+            queue_capacity: 1
+            output_mode: "window"
+            web_bind_address: "0.0.0.0"
+            web_port: 8080
+            web_stream_name: "aimer_preview"
+            max_fps: 30.0
+          enable_runtime_log: true
+          bullet_speed_log_delta: 0.05
+          heat_log_delta: 1.0
+          convert_raw_gimbal_quat_to_body: true
+          referee_topic: "robot_game_ref"
+      - calibration: AutoAimRunConfig::MainCameraCalibration
+  - module: xrobot-org/SharedTopicClient
+    id: shared_topic_tx
+    args:
+      - uart: devc_usb
+      - slot_count: 256
+      - topic_configs:
+          - ["target_euler", "host"]
+          - ["fire_notify", "host"]
+          - ["camera_sync_command", "host"]
+settings:
+  monitor_sleep_ms: 1000
