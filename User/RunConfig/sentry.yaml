@@ -45,7 +45,8 @@ modules:
           mcu_domain: "host"
           gyro_topic: "gimbal_gyro"
           accl_topic: "gimbal_accl"
-          quat_topic: "gimbal_quat"
+          quat_topic: "ahrs_quaternion"
+          imu_axes: ImuAxes::X_FORWARD_Y_LEFT_Z_UP
   - module: QDU-Robomaster/ArmorDetector
     id: armor_detector
     args:
@@ -184,7 +185,7 @@ modules:
       - topic_configs:
           - ["gimbal_gyro", "host"]
           - ["gimbal_accl", "host"]
-          - ["gimbal_quat", "host"]
+          - ["ahrs_quaternion", "host"]
           - ["camera_sync_result", "host"]
           - ["robot_game_ref", "host"]
   - module: xrobot-org/SharedTopicClient
