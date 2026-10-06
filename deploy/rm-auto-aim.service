@@ -1,0 +1,14 @@
+[Unit]
+Description=RoboMaster auto-aim (bsp-linux-autoaim)
+After=network.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@ROOT@
+ExecStart=@ROOT@/build/release/rm_auto_aim
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

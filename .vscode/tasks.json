@@ -36,24 +36,6 @@
             "problemMatcher": []
         },
         {
-            "label": "XRobot: select hik",
-            "type": "shell",
-            "command": "xrobot",
-            "args": [
-                "gen",
-                "-c",
-                "User/RunConfig/hik.yaml"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "windows": {
-                "command": "Write-Host 'Linux BSP tasks run in a VS Code Remote-SSH window on the Linux target; open this repository there.'; exit 1",
-                "args": []
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "XRobot: select sentry",
             "type": "shell",
             "command": "xrobot",
@@ -61,24 +43,6 @@
                 "gen",
                 "-c",
                 "User/RunConfig/sentry.yaml"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "windows": {
-                "command": "Write-Host 'Linux BSP tasks run in a VS Code Remote-SSH window on the Linux target; open this repository there.'; exit 1",
-                "args": []
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "XRobot: select vision_capture",
-            "type": "shell",
-            "command": "xrobot",
-            "args": [
-                "gen",
-                "-c",
-                "User/RunConfig/vision_capture.yaml"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -142,27 +106,9 @@
             "problemMatcher": []
         },
         {
-            "label": "Build: hik debug",
-            "dependsOn": [
-                "XRobot: select hik",
-                "CMake: build debug"
-            ],
-            "dependsOrder": "sequence",
-            "problemMatcher": []
-        },
-        {
             "label": "Build: sentry debug",
             "dependsOn": [
                 "XRobot: select sentry",
-                "CMake: build debug"
-            ],
-            "dependsOrder": "sequence",
-            "problemMatcher": []
-        },
-        {
-            "label": "Build: vision_capture debug",
-            "dependsOn": [
-                "XRobot: select vision_capture",
                 "CMake: build debug"
             ],
             "dependsOrder": "sequence",

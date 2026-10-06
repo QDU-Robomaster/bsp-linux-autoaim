@@ -75,3 +75,55 @@ jobs:
           xrobot gen -c "$config"
           cmake --build --preset release --target rm_auto_aim -j2
         done
+
+  # 步兵与英雄的生产路径：arm64 + HailoRT，只编译 / Production path of infantry and hero:
+  # arm64 with HailoRT, compile only.
+  build-arm64-hailo:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+    - name: Init submodules
+      run: git submodule update --init --recursive
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends ninja-build libopencv-dev libeigen3-dev \
+          libnm-dev libglib2.0-dev libudev-dev python3-venv
+    - name: Cache HailoRT
+      id: hailort
+      uses: actions/cache@v4
+      with:
+        path: ~/hailort
+        key: hailort-v4.24.0-${{ runner.os }}-${{ runner.arch }}
+    - name: Build HailoRT from source
+      if: steps.hailort.outputs.cache-hit != 'true'
+      run: |
+        git clone --depth 1 -b v4.24.0 https://github.com/hailo-ai/hailort.git /tmp/hailort
+        cmake -S /tmp/hailort -B /tmp/hailort-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+          -DHAILO_BUILD_EXAMPLES=OFF -DHAILO_BUILD_UT=OFF -DHAILO_BUILD_PYBIND=OFF \
+          -DHAILO_BUILD_HAILORTCLI=OFF -DCMAKE_INSTALL_PREFIX="$HOME/hailort"
+        # 安装规则也包含 hailortcli，所以构建默认目标再整体安装 / The install rules also cover
+        # hailortcli, so build the default targets and install everything.
+        cmake --build /tmp/hailort-build
+        cmake --install /tmp/hailort-build
+    - name: Install the pinned XRobot tool
+      shell: bash
+      run: |
+        set -euo pipefail
+        pin=$(python3 -c 'import yaml; print((yaml.safe_load(open("Modules/modules.yaml")) or {}).get("xrobot") or "")')
+        python3 -m venv "$HOME/xr"
+        "$HOME/xr/bin/pip" install "xrobot==$pin"
+        echo "$HOME/xr/bin" >> "$GITHUB_PATH"
+    - name: Resolve locked Modules
+      run: xrobot setup --frozen --context-ref "$XR_CONTEXT_REF" --release-ref "$XR_RELEASE_REF"
+    - name: Build the Hailo product
+      shell: bash
+      run: |
+        set -euo pipefail
+        xrobot gen -c User/xrobot.yaml
+        cmake --preset release -DBUILD_TESTING=OFF -DCMAKE_PREFIX_PATH="$HOME/hailort" | tee configure.log
+        grep -q "HailoRT=1" configure.log
+        cmake --build --preset release --target rm_auto_aim -j4

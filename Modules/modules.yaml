@@ -7,6 +7,7 @@ modules:
   - QDU-Robomaster/ArmorDetector@same-or-dev
   - QDU-Robomaster/ArmorTracker@same-or-dev
   - QDU-Robomaster/Aimer@same-or-dev
-  - QDU-Robomaster/VisionCapture@same-or-dev
+  - QDU-Robomaster/VisionPreview@same-or-dev
+  - QDU-Robomaster/VisionRecorder@same-or-dev
   # User/main.cpp uses RefereeTypes.hpp directly (see README).
   - QDU-Robomaster/Referee@same-or-dev
