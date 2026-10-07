@@ -44,9 +44,9 @@ The image chain publishes stage by stage: the camera publishes `gimbal_image` (6
 | `User/xrobot.yaml` | Infantry, hero | `armor_det_v7.hef`, Hailo, 1 frame in flight |
 | `User/RunConfig/sentry.yaml` | Sentry (own calibration and mounting) | `armor_det_v7.onnx`, OpenVINO NPU, 2 frames in flight |
 
-两份配置都由 DevC 的 CameraSync 外触发（`trigger_period_us`，默认 10 ms），ADC 8 位，增益 4 dB。相机标定（原生 1440×1080 像素下的内参与 5 个畸变系数）写在配置的 `constexprs` 段；安装外参是 ArmorTracker 的 `mount_rotation_wxyz` 与 `mount_translation`（相机安装到云台本体，本体系 x 右、y 前、z 上）。两者都可以用 VisionRecorder 录像后用它的离线工具标定。
+两份配置都由 DevC 的 CameraSync 外触发（`trigger_period_us` 5 ms，即 200 Hz，须与 DevC 配置里 CameraSync 的 `trigger_period_us` 相同；曝光不超过 4.9 ms），ADC 8 位，增益 4 dB。相机标定（原生 1440×1080 像素下的内参与 5 个畸变系数）写在配置的 `constexprs` 段；安装外参是 ArmorTracker 的 `mount_rotation_wxyz` 与 `mount_translation`（相机安装到云台本体，本体系 x 右、y 前、z 上）。两者都可以用 VisionRecorder 录像后用它的离线工具标定。
 
-Both configurations are externally triggered by the DevC's CameraSync (`trigger_period_us`, 10 ms by default), with an 8-bit ADC and 4 dB gain. The camera calibration (intrinsics and five distortion coefficients in native 1440×1080 pixels) is in the configuration's `constexprs` section; the mounting is ArmorTracker's `mount_rotation_wxyz` and `mount_translation` (camera mount to gimbal body, body x right, y forward, z up). Both can be calibrated with VisionRecorder's offline tools on a recording.
+Both configurations are externally triggered by the DevC's CameraSync (`trigger_period_us` 5 ms, i.e. 200 Hz, equal to CameraSync's `trigger_period_us` in the DevC configuration; exposure at most 4.9 ms), with an 8-bit ADC and 4 dB gain. The camera calibration (intrinsics and five distortion coefficients in native 1440×1080 pixels) is in the configuration's `constexprs` section; the mounting is ArmorTracker's `mount_rotation_wxyz` and `mount_translation` (camera mount to gimbal body, body x right, y forward, z up). Both can be calibrated with VisionRecorder's offline tools on a recording.
 
 每份配置都带网页预览与录像：预览在 `http://<主机>:8080/`；录像把 VisionRecorder 的 `record` 改为 `true`，每次启动在 `recordings/` 下新建一个以时间命名的目录，可由回放 BSP 直接回放。配置文件的格式见 [XRobot 文档](https://xrobot.work/docs/proj_man/proj-man-config)。
 

@@ -40,7 +40,7 @@ modules:
       - camera: camera
       - settings:
           mode: SyncMode::TRIGGER
-          trigger_period_us: 10000
+          trigger_period_us: 5000
           offset_us: AutoAimRunConfig::SyncOffsetUs
           mcu_domain: "host"
           gyro_topic: "gimbal_gyro"
