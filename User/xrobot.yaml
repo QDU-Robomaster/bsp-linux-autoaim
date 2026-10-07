@@ -53,12 +53,11 @@ modules:
       - settings:
           camera_name: "gimbal"
           model_dir: "armor-models/model_private"
-          detector_model: "armor_det_v4.hef"
+          detector_model: "armor_det_v7.hef"
           number_model: "armor_num_v1.onnx"
           openvino_device: "CPU"
           min_confidence: 0.4F
           nms_iou: 0.3F
-          target_color: TargetColor::FROM_REFEREE
           inflight: 1
   - module: QDU-Robomaster/ArmorTracker
     id: armor_tracker
@@ -68,9 +67,12 @@ modules:
           mount_rotation_wxyz: [0.999929746909, -0.009747410407, -0.004716638126, -0.004821053970]
           mount_translation: [0.041861764663827829, 0.136068364765315, 0.0089956658836358675]
           target_number: -1
+          target_color: TargetColor::FROM_REFEREE
           min_detect_count: 2
           max_temp_lost: 15
           outpost_max_temp_lost: 75
+          off_hold_s: 0.2
+          off_dead_s: 1.0
           latency_s: 0.07
           bullet_speed: 21.7
           select:

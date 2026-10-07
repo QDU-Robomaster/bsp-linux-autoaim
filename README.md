@@ -6,7 +6,7 @@ Linux 实机自瞄 BSP / Linux autoaim BSP for the real robot
 
 运行平台是带海康工业相机（MV-CS016-10UC）的 Linux 主机：步兵与英雄为 Raspberry Pi 5 + Hailo-8，哨兵为带 NPU 的 x86 主机。主机通过 USB 与 DevC 通信，入口按 VID `1d50`、PID `6199` 和 CDC 接口名 `XRobot AutoAim` 打开自瞄口（115200 波特率）。程序由 LibXR 和 XRobot 静态装配，入口源文件 `User/main.cpp` 初始化平台、注册 `ramfs` 与 `devc_usb` 后调用 `XROBOT_MAIN()`。
 
-图像链路逐层发布：相机发 `gimbal_image`（640×512 BayerRG8），CameraFrameSync 配上曝光时刻的 IMU 发 `gimbal_synced`，ArmorDetector（v4 模型）发 `gimbal_detected`，ArmorTracker 发 `gimbal_tracked`，Aimer 发 `gimbal_aimed`，并通过 SharedTopicClient 把云台目标与发射许可发给 DevC。检测后端按模型文件的后缀选择：`.hef` 用 HailoRT，`.onnx` 用 OpenVINO。
+图像链路逐层发布：相机发 `gimbal_image`（640×512 BayerRG8），CameraFrameSync 配上曝光时刻的 IMU 发 `gimbal_synced`，ArmorDetector（v7 模型）发 `gimbal_detected`，ArmorTracker 发 `gimbal_tracked`，Aimer 发 `gimbal_aimed`，并通过 SharedTopicClient 把云台目标与发射许可发给 DevC。检测后端按模型文件的后缀选择：`.hef` 用 HailoRT，`.onnx` 用 OpenVINO。
 
 `SharedTopic` 按名称查找收到的 Topic，而 `ArmorDetector` 与 `Aimer` 需要带类型的 `robot_game_ref`。因此 `User/main.cpp` 在 `XROBOT_MAIN()` 之前用 `RefereeTypes::RobotGameRefereePack` 创建该 Topic，`Modules/modules.yaml` 因此列出 `QDU-Robomaster/Referee`。IMU 与 CameraSync 的 Topic 由排在 SharedTopic 之前的 CameraFrameSync 创建。
 
@@ -26,7 +26,7 @@ CMakePresets.json         CMake 预设
 
 The platform is a Linux host with a Hikrobot industrial camera (MV-CS016-10UC): a Raspberry Pi 5 with Hailo-8 on infantry and hero, and an x86 host with an NPU on the sentry. The host talks to the DevC over USB; the entry opens the auto-aim port by VID `1d50`, PID `6199` and the CDC interface name `XRobot AutoAim` (115200 baud). The program is statically assembled with LibXR and XRobot. The entry source `User/main.cpp` initialises the platform, registers `ramfs` and `devc_usb`, then calls `XROBOT_MAIN()`.
 
-The image chain publishes stage by stage: the camera publishes `gimbal_image` (640×512 BayerRG8), CameraFrameSync pairs it with the IMU at the exposure time and publishes `gimbal_synced`, ArmorDetector (v4 model) publishes `gimbal_detected`, ArmorTracker publishes `gimbal_tracked`, and Aimer publishes `gimbal_aimed` and sends the gimbal target and fire permission to the DevC through SharedTopicClient. The detection backend follows the model file suffix: `.hef` runs on HailoRT, `.onnx` on OpenVINO.
+The image chain publishes stage by stage: the camera publishes `gimbal_image` (640×512 BayerRG8), CameraFrameSync pairs it with the IMU at the exposure time and publishes `gimbal_synced`, ArmorDetector (v7 model) publishes `gimbal_detected`, ArmorTracker publishes `gimbal_tracked`, and Aimer publishes `gimbal_aimed` and sends the gimbal target and fire permission to the DevC through SharedTopicClient. The detection backend follows the model file suffix: `.hef` runs on HailoRT, `.onnx` on OpenVINO.
 
 `SharedTopic` looks up received Topics by name, while `ArmorDetector` and `Aimer` need the typed `robot_game_ref`. `User/main.cpp` therefore creates this Topic with `RefereeTypes::RobotGameRefereePack` before `XROBOT_MAIN()`, and `Modules/modules.yaml` lists `QDU-Robomaster/Referee` for the same reason. The IMU and CameraSync Topics are created by CameraFrameSync, which comes before SharedTopic.
 
@@ -36,13 +36,13 @@ The image chain publishes stage by stage: the camera publishes `gimbal_image` (6
 
 | 配置 | 产品 | 检测 |
 | --- | --- | --- |
-| `User/xrobot.yaml` | 步兵、英雄 | `armor_det_v4.hef`，Hailo，1 帧在途 |
-| `User/RunConfig/sentry.yaml` | 哨兵（独立标定与安装外参） | `armor_det_v4.onnx`，OpenVINO NPU，2 帧在途 |
+| `User/xrobot.yaml` | 步兵、英雄 | `armor_det_v7.hef`，Hailo，1 帧在途 |
+| `User/RunConfig/sentry.yaml` | 哨兵（独立标定与安装外参） | `armor_det_v7.onnx`，OpenVINO NPU，2 帧在途 |
 
 | Configuration | Product | Detection |
 | --- | --- | --- |
-| `User/xrobot.yaml` | Infantry, hero | `armor_det_v4.hef`, Hailo, 1 frame in flight |
-| `User/RunConfig/sentry.yaml` | Sentry (own calibration and mounting) | `armor_det_v4.onnx`, OpenVINO NPU, 2 frames in flight |
+| `User/xrobot.yaml` | Infantry, hero | `armor_det_v7.hef`, Hailo, 1 frame in flight |
+| `User/RunConfig/sentry.yaml` | Sentry (own calibration and mounting) | `armor_det_v7.onnx`, OpenVINO NPU, 2 frames in flight |
 
 两份配置都由 DevC 的 CameraSync 外触发（`trigger_period_us`，默认 10 ms），ADC 8 位，增益 4 dB。相机标定（原生 1440×1080 像素下的内参与 5 个畸变系数）写在配置的 `constexprs` 段；安装外参是 ArmorTracker 的 `mount_rotation_wxyz` 与 `mount_translation`（相机安装到云台本体，本体系 x 右、y 前、z 上）。两者都可以用 VisionRecorder 录像后用它的离线工具标定。
 
@@ -71,7 +71,7 @@ The models live in `armor-models/model_private/` at the repository root and are 
 
 ```bash
 git clone https://github.com/QDU-Robomaster/armor-models.git
-armor-models/scripts/fetch_model.sh det-v4.0 armor-models/model_private
+armor-models/scripts/fetch_model.sh det-v7.0 armor-models/model_private
 armor-models/scripts/fetch_model.sh num-v1.0 armor-models/model_private
 ```
 
