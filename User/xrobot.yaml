@@ -89,6 +89,17 @@ modules:
             max_angle_rad: 0.3
             temp_lost_scale: 0.35
             switch_margin: 0.25
+          # 远距离切到 NARROW 并跟随目标（6 m 进、5 m 出）/ NARROW following at long
+          # range (enter at 6 m, leave at 5 m)
+          view:
+            enabled: true
+            enter_m: 6.0
+            exit_m: 5.0
+            lost_s: 0.1
+            recenter_frac: 0.25
+            edge_margin: 0.1
+            min_move_s: 0.1
+      - sync: '&camera_frame_sync'
   - module: QDU-Robomaster/Aimer
     id: aimer
     args:
