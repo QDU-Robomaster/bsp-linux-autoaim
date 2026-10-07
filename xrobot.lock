@@ -13,7 +13,9 @@ requests:
   ref: same-or-dev
 - id: QDU-Robomaster/Referee
   ref: same-or-dev
-- id: QDU-Robomaster/VisionCapture
+- id: QDU-Robomaster/VisionPreview
+  ref: same-or-dev
+- id: QDU-Robomaster/VisionRecorder
   ref: same-or-dev
 - id: xrobot-org/SharedTopic
   ref: same-or-dev
@@ -26,21 +28,28 @@ modules:
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: ec936518c35c68876a54a1b04af21f4e5c8f5c6c
+    commit: 7e5cdfdad699f0148d25fbf280bbb515ae801bda
   QDU-Robomaster/ArmorDetector:
     repo: https://github.com/QDU-Robomaster/ArmorDetector.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: a545fd983c7d9777d92419f623a98c763bf955cc
+    commit: 38655a43c08ab3ae4249a48949c07cfa25c3bb74
   QDU-Robomaster/ArmorTracker:
     repo: https://github.com/QDU-Robomaster/ArmorTracker.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: 36e1fd5992dd6cc72d9fa7fa5e9a3ac3b55056c1
+    commit: cad2873924a30c2a4a56f7ac37697b36b70a4693
+  QDU-Robomaster/AutoAimTypes:
+    repo: https://github.com/QDU-Robomaster/AutoAimTypes.git
+    source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
+    requested: same-or-dev
+    resolved_ref: dev
+    ref_kind: branch
+    commit: 0215f75080fe2e95696c4a63a9dc321a5f18f474
   QDU-Robomaster/CMD:
     repo: https://github.com/QDU-Robomaster/CMD.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
@@ -54,14 +63,14 @@ modules:
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: 1f5305e432a62e4e73841a046d057e37a6ee6941
+    commit: e84ce108dffde3233525234a2f0d16a9d7f61d2d
   QDU-Robomaster/CameraFrameSync:
     repo: https://github.com/QDU-Robomaster/CameraFrameSync.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: a0f07ae0ad51a8d0ebd48ed1107a865071aca5c6
+    commit: 686627537cf33fa3324f8011f3d9f42cefd4d555
   QDU-Robomaster/CameraSync:
     repo: https://github.com/QDU-Robomaster/CameraSync.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
@@ -75,28 +84,28 @@ modules:
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: d9711441b32d06863d764d3d413e9fb8d53488c9
+    commit: 924ac0943fd97bcfb84f61af6c2dadda8ac8d78a
   QDU-Robomaster/Referee:
     repo: https://github.com/QDU-Robomaster/Referee.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: 96b2468ea414b5837a0c452cece792247a76b210
-  QDU-Robomaster/VisionCapture:
-    repo: https://github.com/QDU-Robomaster/VisionCapture.git
-    source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
-    requested: same-or-dev
-    resolved_ref: dev
-    ref_kind: branch
-    commit: bd2d682de724c47b8f5adc72f894f1108d7f760d
+    commit: eeb6478387bf1038da47561d1fb67b4b71433642
   QDU-Robomaster/VisionPreview:
     repo: https://github.com/QDU-Robomaster/VisionPreview.git
     source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
     requested: same-or-dev
     resolved_ref: dev
     ref_kind: branch
-    commit: 5b6d1e1aafe949b9251562b5516eab522a679226
+    commit: 16d56cb5a31231c2b3998946b7d1c98ca6b22420
+  QDU-Robomaster/VisionRecorder:
+    repo: https://github.com/QDU-Robomaster/VisionRecorder.git
+    source: https://qdu-robomaster.github.io/qdu-future-modules/index.yaml
+    requested: same-or-dev
+    resolved_ref: dev
+    ref_kind: branch
+    commit: 2004d5298747398d3362f0dd3944a4a19062d518
   xrobot-org/DurationStatistics:
     repo: https://github.com/xrobot-org/DurationStatistics.git
     source: https://xrobot.work/xrobot-modules/index.yaml
